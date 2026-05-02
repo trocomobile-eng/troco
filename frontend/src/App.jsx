@@ -49,7 +49,7 @@ function AppRoutes() {
       <BrowserRouter>
         <div className="max-w-lg mx-auto min-h-screen">
           <Routes>
-            <Route path="/" element={null} />
+            <Route path="/" element={<LandingPage />} />
 
             <Route
               path="/login"
@@ -126,7 +126,6 @@ function AppRoutes() {
               }
             />
 
-            <Route path="/" element={<LandingPage />} />
           </Routes>
         </div>
       </BrowserRouter>
