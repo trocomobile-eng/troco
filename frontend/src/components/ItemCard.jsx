@@ -6,34 +6,24 @@ export default function ItemCard({ item }) {
   const { user } = useAuth();
 
   const isMine = item.ownerId === user?.uid;
-
-  const imageSrc = item.imageUrl || item.image_url || null;
-
+  const image = item.imageUrl || item.image_url;
   const location =
-    item.locationArea ||
-    item.location_area ||
-    item.locationDetails ||
-    item.location_details ||
-    "Paris";
-
-  const goToItem = () => {
-    navigate(`/items/${item.id}`);
-  };
+    item.locationArea || item.location_area || item.locationDetails || "Paris";
 
   return (
     <div
-      onClick={goToItem}
-      className="bg-white rounded-2xl overflow-hidden shadow-sm active:scale-[0.98] transition cursor-pointer"
+      onClick={() => navigate(`/items/${item.id}`)}
+      className="group bg-white/90 backdrop-blur rounded-[1.9rem] overflow-hidden shadow-[0_18px_45px_rgba(15,23,42,0.08)] border border-white cursor-pointer active:scale-[0.98] transition-all duration-200 hover:-translate-y-0.5 hover:shadow-[0_22px_55px_rgba(15,23,42,0.12)]"
     >
-      <div className="relative aspect-[4/3] bg-[#f4f1ec] overflow-hidden">
-        {imageSrc ? (
+      <div className="relative aspect-[4/3] bg-gradient-to-br from-sky-50 to-emerald-50 overflow-hidden">
+        {image ? (
           <img
-            src={imageSrc}
-            alt={item.title}
-            className="w-full h-full object-cover"
+            src={image}
+            alt={item.title || "Objet"}
+            className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-[1.04]"
           />
         ) : (
-          <div className="w-full h-full flex items-center justify-center text-gray-400 text-sm">
+          <div className="w-full h-full flex items-center justify-center text-slate-400 text-xs">
             Pas d’image
           </div>
         )}
@@ -44,7 +34,7 @@ export default function ItemCard({ item }) {
               e.stopPropagation();
               navigate(`/propose/${item.id}`);
             }}
-            className="absolute bottom-3 right-3 bg-white/90 backdrop-blur px-3 py-1.5 rounded-full text-xs font-semibold text-troco-green shadow"
+            className="absolute right-2 bottom-2 bg-white/95 backdrop-blur px-3 py-1.5 rounded-full text-[11px] font-black text-emerald-600 shadow-sm border border-emerald-100 active:scale-95"
           >
             Échanger
           </button>
@@ -52,13 +42,24 @@ export default function ItemCard({ item }) {
       </div>
 
       <div className="p-3">
-        <h3 className="text-[15px] font-semibold text-slate-900 truncate">
+        <p className="font-black text-[14px] text-slate-900 truncate">
           {item.title || "Sans titre"}
-        </h3>
-
-        <p className="text-[12px] text-slate-400 mt-1">
-          {location}
         </p>
+
+        <div className="mt-1.5 inline-flex items-center gap-1 rounded-full bg-sky-50 border border-sky-100 px-2.5 py-1">
+          <span className="text-[10px]">📍</span>
+          <p className="text-[11px] font-bold text-slate-600 truncate">
+            {location}
+          </p>
+        </div>
+
+        {item.category && (
+          <div className="mt-2">
+            <span className="inline-flex rounded-full bg-emerald-50 border border-emerald-100 px-2.5 py-1 text-[10px] font-bold text-emerald-700">
+              {item.category}
+            </span>
+          </div>
+        )}
       </div>
     </div>
   );

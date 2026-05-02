@@ -57,25 +57,13 @@ export default function ProposeExchangePage() {
             return;
           }
 
-          const ex = {
-            id: exchangeSnap.id,
-            ...exchangeSnap.data(),
-          };
-
+          const ex = { id: exchangeSnap.id, ...exchangeSnap.data() };
           setExchange(ex);
-
-          if (ex.counterStatus === "pending") {
-            setError("Une négociation est déjà en attente de réponse.");
-            return;
-          }
 
           const requestedSnap = await getDoc(doc(db, "items", ex.requestedItemId));
 
           if (requestedSnap.exists()) {
-            setRequestedItem({
-              id: requestedSnap.id,
-              ...requestedSnap.data(),
-            });
+            setRequestedItem({ id: requestedSnap.id, ...requestedSnap.data() });
           }
 
           const q = query(
@@ -86,12 +74,10 @@ export default function ProposeExchangePage() {
 
           const snapshot = await getDocs(q);
 
-          const list = snapshot.docs.map((doc) => ({
+          setItems(snapshot.docs.map((doc) => ({
             id: doc.id,
             ...doc.data(),
-          }));
-
-          setItems(list);
+          })));
         } else {
           const itemSnap = await getDoc(doc(db, "items", itemId));
 
@@ -100,11 +86,7 @@ export default function ProposeExchangePage() {
             return;
           }
 
-          const item = {
-            id: itemSnap.id,
-            ...itemSnap.data(),
-          };
-
+          const item = { id: itemSnap.id, ...itemSnap.data() };
           setRequestedItem(item);
 
           const q = query(
@@ -115,12 +97,10 @@ export default function ProposeExchangePage() {
 
           const snapshot = await getDocs(q);
 
-          const list = snapshot.docs.map((doc) => ({
+          setItems(snapshot.docs.map((doc) => ({
             id: doc.id,
             ...doc.data(),
-          }));
-
-          setItems(list);
+          })));
         }
       } catch (e) {
         console.error(e);
@@ -135,12 +115,8 @@ export default function ProposeExchangePage() {
 
   const toggleItem = (id) => {
     setSelectedIds((current) => {
-      if (current.includes(id)) {
-        return current.filter((x) => x !== id);
-      }
-
+      if (current.includes(id)) return current.filter((x) => x !== id);
       if (current.length >= 2) return current;
-
       return [...current, id];
     });
   };
@@ -160,12 +136,14 @@ export default function ProposeExchangePage() {
           counterMessage: message.trim(),
           updatedAt: serverTimestamp(),
         });
+
+        navigate(`/exchanges/${fromExchangeId}`, { replace: true });
       } else {
         if (!requestedItem?.ownerId) {
           throw new Error("Impossible d’identifier le propriétaire de l’objet.");
         }
 
-        await addDoc(collection(db, "exchanges"), {
+        const docRef = await addDoc(collection(db, "exchanges"), {
           senderId: user.uid,
           receiverId: requestedItem.ownerId,
           participants: [user.uid, requestedItem.ownerId],
@@ -185,9 +163,9 @@ export default function ProposeExchangePage() {
           createdAt: serverTimestamp(),
           updatedAt: serverTimestamp(),
         });
-      }
 
-      navigate("/exchanges", { replace: true });
+        navigate(`/exchanges/${docRef.id}`, { replace: true });
+      }
     } catch (e) {
       console.error(e);
       setError(e.message || "Erreur lors de l’envoi.");
@@ -204,6 +182,17 @@ export default function ProposeExchangePage() {
     );
   }
 
+  const pageTitle = isCounter ? "Demander une modification" : "Proposer un échange";
+  const libraryTitle = isCounter
+    ? "Ses objets"
+    : "Mes objets";
+  const librarySubtitle = isCounter
+    ? "Choisis dans la bibliothèque de l’autre personne ce que tu préférerais recevoir."
+    : "Choisis ce que tu veux proposer en échange.";
+  const requestedTitle = isCounter
+    ? "Objet de départ"
+    : "Objet que tu veux recevoir";
+
   return (
     <div className="page max-w-lg mx-auto min-h-screen bg-[#f7f5f1] pb-24">
       <div className="px-5 pt-5 pb-4">
@@ -212,13 +201,13 @@ export default function ProposeExchangePage() {
         </button>
 
         <h1 className="text-2xl font-extrabold text-slate-900">
-          {isCounter ? "Négocier" : "Proposer un échange"}
+          {pageTitle}
         </h1>
 
         <p className="text-sm text-slate-500 mt-1">
           {isCounter
-            ? "Choisis jusqu’à 2 objets dans la bibliothèque de l’autre personne."
-            : "Choisis jusqu’à 2 objets de ta bibliothèque."}
+            ? "Tu ne refuses pas encore : tu proposes une autre version de l’échange."
+            : "Sélectionne jusqu’à 2 objets à proposer."}
         </p>
       </div>
 
@@ -232,7 +221,7 @@ export default function ProposeExchangePage() {
         {requestedItem && (
           <div className="bg-white rounded-3xl shadow-sm p-4">
             <p className="text-xs uppercase font-bold text-slate-400 mb-2">
-              Objet demandé
+              {requestedTitle}
             </p>
 
             {requestedItem.imageUrl && (
@@ -244,8 +233,37 @@ export default function ProposeExchangePage() {
             )}
 
             <p className="font-bold text-slate-900">{requestedItem.title}</p>
+            <p className="text-sm text-slate-500 mt-1">
+              {requestedItem.category || "Sans catégorie"}
+            </p>
           </div>
         )}
+
+        {isCounter && exchange?.offeredItemIds?.length > 0 && (
+          <div className="bg-yellow-50 border border-yellow-200 rounded-3xl p-4">
+            <p className="text-xs uppercase font-bold text-yellow-700 mb-1">
+              Offre initiale
+            </p>
+            <p className="text-sm text-yellow-800">
+              L’autre personne t’avait proposé {exchange.offeredItemIds.length} objet
+              {exchange.offeredItemIds.length > 1 ? "s" : ""}. Ici, tu choisis ce que tu préfères recevoir à la place.
+            </p>
+          </div>
+        )}
+
+        <div className="bg-white rounded-3xl shadow-sm p-4">
+          <p className="text-xs uppercase font-bold text-troco-green">
+            {libraryTitle}
+          </p>
+
+          <h2 className="font-bold text-slate-900 mt-1">
+            {isCounter ? "Ce que je veux recevoir" : "Ce que je propose"}
+          </h2>
+
+          <p className="text-sm text-slate-500 mt-1">
+            {librarySubtitle}
+          </p>
+        </div>
 
         {items.length === 0 ? (
           <div className="bg-white rounded-3xl shadow-sm p-6 text-center">
@@ -254,22 +272,21 @@ export default function ProposeExchangePage() {
               Aucun objet disponible
             </p>
             <p className="text-sm text-slate-500 mt-1">
-              Impossible de faire une proposition pour l’instant.
+              Impossible de faire cette proposition pour l’instant.
             </p>
           </div>
         ) : (
           <div className="grid grid-cols-2 gap-3">
             {items.map((item) => {
               const selected = selectedIds.includes(item.id);
-              const wasInitiallyOffered =
-                exchange?.offeredItemIds?.includes(item.id);
+              const wasInitiallyOffered = exchange?.offeredItemIds?.includes(item.id);
 
               return (
                 <button
                   key={item.id}
                   type="button"
                   onClick={() => toggleItem(item.id)}
-                  className={`relative overflow-hidden rounded-3xl bg-white shadow-sm border text-left ${
+                  className={`relative overflow-hidden rounded-3xl bg-white shadow-sm border text-left active:scale-[0.98] transition ${
                     selected
                       ? "border-troco-green ring-2 ring-troco-green/30"
                       : "border-gray-100"
@@ -301,7 +318,7 @@ export default function ProposeExchangePage() {
 
                   {wasInitiallyOffered && (
                     <div className="absolute top-2 left-2 bg-yellow-100 text-yellow-800 rounded-full px-2 py-1 text-[10px] font-bold">
-                      Offre initiale
+                      Déjà proposé
                     </div>
                   )}
 
@@ -324,23 +341,33 @@ export default function ProposeExchangePage() {
           <textarea
             className="input resize-none mt-2"
             rows={3}
-            placeholder="Ajoute un message..."
+            placeholder={
+              isCounter
+                ? "Explique pourquoi tu préfères ces objets..."
+                : "Ajoute un message à ta proposition..."
+            }
             value={message}
             onChange={(e) => setMessage(e.target.value)}
           />
         </div>
 
-        <button
-          className="btn-primary w-full"
-          disabled={sending || selectedIds.length === 0}
-          onClick={submit}
-        >
-          {sending
-            ? "Envoi..."
-            : isCounter
-            ? "Envoyer la négociation"
-            : "Envoyer la proposition"}
-        </button>
+        <div className="bg-white rounded-3xl shadow-sm p-4">
+          <p className="text-sm font-bold text-slate-900">
+            Sélection : {selectedIds.length}/2
+          </p>
+
+          <button
+            className="btn-primary w-full mt-3"
+            disabled={sending || selectedIds.length === 0}
+            onClick={submit}
+          >
+            {sending
+              ? "Envoi..."
+              : isCounter
+              ? "Envoyer la modification"
+              : "Envoyer la proposition"}
+          </button>
+        </div>
       </div>
 
       <BottomNav />
