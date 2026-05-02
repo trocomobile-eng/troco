@@ -1,6 +1,14 @@
 import { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { api, imageUrl } from "../api";
+import {
+  collection,
+  doc,
+  getDoc,
+  getDocs,
+  query,
+  where,
+} from "firebase/firestore";
+import { db } from "../firebase";
 import { useAuth } from "../context/AuthContext";
 import { TopBar, LoadingSpinner, EmptyState } from "../components/UI";
 import ItemCard from "../components/ItemCard";
@@ -9,16 +17,17 @@ import BottomNav from "../components/BottomNav";
 export default function UserItemsPage() {
   const { id } = useParams();
   const navigate = useNavigate();
-  const { token, loading: authLoading } = useAuth();
+  const { user, loading: authLoading } = useAuth();
 
   const [items, setItems] = useState([]);
+  const [profile, setProfile] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
   useEffect(() => {
     if (authLoading) return;
 
-    if (!token) {
+    if (!user) {
       navigate("/login");
       return;
     }
@@ -28,31 +37,58 @@ export default function UserItemsPage() {
       setError("");
 
       try {
-        const stock = await api.getUserItems(id, token);
+        const userRef = doc(db, "users", id);
+        const userSnap = await getDoc(userRef);
 
-        if (stock?.error) throw new Error(stock.error);
+        let userProfile = null;
 
-        setItems(Array.isArray(stock) ? stock : []);
+        if (userSnap.exists()) {
+          userProfile = {
+            id: userSnap.id,
+            ...userSnap.data(),
+          };
+        }
+
+        const itemsQuery = query(
+          collection(db, "items"),
+          where("ownerId", "==", id)
+        );
+
+        const snapshot = await getDocs(itemsQuery);
+
+        const list = snapshot.docs.map((doc) => ({
+          id: doc.id,
+          ...doc.data(),
+        }));
+
+        setItems(list);
+
+        setProfile({
+          username:
+            userProfile?.username ||
+            userProfile?.displayName ||
+            list[0]?.username ||
+            "Utilisateur",
+          avatar_url:
+            userProfile?.avatar_url ||
+            userProfile?.avatarUrl ||
+            userProfile?.photoURL ||
+            list[0]?.owner_avatar_url ||
+            "",
+          items_count: list.length,
+        });
       } catch (e) {
+        console.error("Erreur profil utilisateur :", e);
         setError(e.message || "Erreur de chargement");
         setItems([]);
+        setProfile(null);
       } finally {
         setLoading(false);
       }
     }
 
     load();
-  }, [id, token, authLoading, navigate]);
-
-  const firstItem = items[0];
-
-  const profile = firstItem
-    ? {
-        username: firstItem.username || "Utilisateur",
-        avatar_url: firstItem.owner_avatar_url || "",
-        items_count: items.length,
-      }
-    : null;
+  }, [id, user, authLoading, navigate]);
 
   return (
     <div className="page max-w-lg mx-auto">
@@ -75,7 +111,7 @@ export default function UserItemsPage() {
                   <div className="w-20 h-20 rounded-3xl overflow-hidden bg-troco-green text-white flex items-center justify-center text-3xl font-bold flex-shrink-0">
                     {profile.avatar_url ? (
                       <img
-                        src={imageUrl(profile.avatar_url)}
+                        src={profile.avatar_url}
                         alt={profile.username}
                         className="w-full h-full object-cover"
                       />

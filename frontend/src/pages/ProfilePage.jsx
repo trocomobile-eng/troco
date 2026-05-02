@@ -14,7 +14,9 @@ import {
 } from "firebase/firestore";
 import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
 import BottomNav from "../components/BottomNav";
-import { CATEGORIES } from "../api";
+import TrocoPageHeader from "../components/TrocoPageHeader";
+import { CATEGORIES } from "../constants/categories";
+
 
 const ARRONDISSEMENTS = [
   "Paris 1", "Paris 2", "Paris 3", "Paris 4", "Paris 5",
@@ -129,7 +131,10 @@ export default function ProfilePage() {
 
     try {
       const cleanName = file.name.replace(/\s+/g, "-").toLowerCase();
-      const avatarRef = ref(storage, `avatars/${user.uid}/${Date.now()}-${cleanName}`);
+      const avatarRef = ref(
+        storage,
+        `avatars/${user.uid}/${Date.now()}-${cleanName}`
+      );
 
       await uploadBytes(avatarRef, file);
       const avatarUrl = await getDownloadURL(avatarRef);
@@ -182,23 +187,18 @@ export default function ProfilePage() {
 
   return (
     <div className="page max-w-lg mx-auto min-h-screen pb-24 bg-[radial-gradient(circle_at_top_left,rgba(56,189,248,0.35),transparent_35%),radial-gradient(circle_at_top_right,rgba(16,185,129,0.30),transparent_35%),linear-gradient(180deg,#eefcff,#f4fff8)]">
-      <div className="px-5 pt-5 pb-4 flex items-center justify-between">
-        <div>
-          <div className="text-lg font-black bg-gradient-to-r from-sky-500 to-emerald-500 bg-clip-text text-transparent">
-            TROCO
-          </div>
-          <h1 className="text-3xl font-black text-slate-900 mt-1">
-            Profil
-          </h1>
-        </div>
-
-        <button
-          onClick={handleLogout}
-          className="text-sm font-bold text-slate-600 bg-white/80 rounded-full px-4 py-2 shadow-sm border border-white"
-        >
-          Déconnexion
-        </button>
-      </div>
+      <TrocoPageHeader
+        title="Profil"
+        subtitle="Ton espace, tes objets, tes préférences."
+        action={
+          <button
+            onClick={handleLogout}
+            className="text-sm font-bold text-slate-600 bg-white/80 rounded-full px-4 py-2 shadow-sm border border-white"
+          >
+            Déconnexion
+          </button>
+        }
+      />
 
       <div className="px-5">
         <div className="bg-white/65 backdrop-blur-xl rounded-[2rem] shadow-sm border border-white/80 p-5 mb-6">
@@ -236,7 +236,9 @@ export default function ProfilePage() {
               {!editing ? (
                 <>
                   <p className="font-black text-xl text-slate-900 truncate">
-                    {profile.displayName || user?.displayName || "Utilisateur Troco"}
+                    {profile.displayName ||
+                      user?.displayName ||
+                      "Utilisateur Troco"}
                   </p>
 
                   <p className="text-sm text-slate-500 truncate">
@@ -266,7 +268,10 @@ export default function ProfilePage() {
                     placeholder="Nom affiché"
                     value={profile.displayName}
                     onChange={(e) =>
-                      setProfile((p) => ({ ...p, displayName: e.target.value }))
+                      setProfile((p) => ({
+                        ...p,
+                        displayName: e.target.value,
+                      }))
                     }
                   />
 
@@ -274,7 +279,10 @@ export default function ProfilePage() {
                     className="input"
                     value={profile.arrondissement}
                     onChange={(e) =>
-                      setProfile((p) => ({ ...p, arrondissement: e.target.value }))
+                      setProfile((p) => ({
+                        ...p,
+                        arrondissement: e.target.value,
+                      }))
                     }
                   >
                     <option value="">Ton arrondissement</option>

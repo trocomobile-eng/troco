@@ -13,12 +13,11 @@ import ExchangesPage from "./pages/ExchangesPage";
 import ExchangeDetailPage from "./pages/ExchangeDetailPage";
 import ProfilePage from "./pages/ProfilePage";
 import UserItemsPage from "./pages/UserItemsPage";
-import AvailabilityPage from "./pages/AvailabilityPage";
 
 function PrivateRoute({ children }) {
   const { user, loading } = useAuth();
 
-  if (loading) return <SplashScreen show={true} />;
+  if (loading) return null;
 
   return user ? children : <Navigate to="/login" replace />;
 }
@@ -26,24 +25,19 @@ function PrivateRoute({ children }) {
 function PublicRoute({ children }) {
   const { user, loading } = useAuth();
 
-  if (loading) return <SplashScreen show={true} />;
+  if (loading) return null;
 
   return !user ? children : <Navigate to="/feed" replace />;
-}
-
-function HomeRedirect() {
-  const { user, loading } = useAuth();
-
-  if (loading) return <SplashScreen show={true} />;
-
-  return <Navigate to={user ? "/feed" : "/login"} replace />;
 }
 
 function AppRoutes() {
   const [showSplash, setShowSplash] = useState(true);
 
   useEffect(() => {
-    const timer = setTimeout(() => setShowSplash(false), 2500);
+    const timer = setTimeout(() => {
+      setShowSplash(false);
+    }, 2500);
+
     return () => clearTimeout(timer);
   }, []);
 
@@ -54,7 +48,7 @@ function AppRoutes() {
       <BrowserRouter>
         <div className="max-w-lg mx-auto min-h-screen">
           <Routes>
-            <Route path="/" element={<HomeRedirect />} />
+            <Route path="/" element={null} />
 
             <Route
               path="/login"
@@ -74,23 +68,8 @@ function AppRoutes() {
               }
             />
 
-            <Route
-              path="/feed"
-              element={
-                <PrivateRoute>
-                  <FeedPage />
-                </PrivateRoute>
-              }
-            />
-
-            <Route
-              path="/items/:id"
-              element={
-                <PrivateRoute>
-                  <ItemDetailPage />
-                </PrivateRoute>
-              }
-            />
+            <Route path="/feed" element={<FeedPage />} />
+            <Route path="/items/:id" element={<ItemDetailPage />} />
 
             <Route
               path="/add"
@@ -129,15 +108,6 @@ function AppRoutes() {
             />
 
             <Route
-              path="/availability/:id"
-              element={
-                <PrivateRoute>
-                  <AvailabilityPage />
-                </PrivateRoute>
-              }
-            />
-
-            <Route
               path="/profile"
               element={
                 <PrivateRoute>
@@ -155,7 +125,7 @@ function AppRoutes() {
               }
             />
 
-            <Route path="*" element={<HomeRedirect />} />
+            <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
         </div>
       </BrowserRouter>

@@ -4,7 +4,7 @@ import { db } from "../firebase";
 import { useAuth } from "../context/AuthContext";
 import ItemCard from "../components/ItemCard";
 import BottomNav from "../components/BottomNav";
-import { CATEGORIES } from "../api";
+import { CATEGORIES } from "../constants/categories";
 
 const CATEGORY_ICONS = {
   Électronique: "⚡",

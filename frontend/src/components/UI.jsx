@@ -1,7 +1,6 @@
 
 
-import { CATEGORY_MAP, CATEGORIES } from "../api";
-
+import { CATEGORY_MAP, CATEGORIES } from "../constants/categories";
 export function TopBar({ title = "Troco", back, action, centered = false }) {
 if (centered) {
 return (

@@ -17,7 +17,7 @@ import { TopBar, LoadingSpinner, EmptyState, CategoryBadge } from "../components
 import { useAuth } from "../context/AuthContext";
 import ItemCard from "../components/ItemCard";
 import BottomNav from "../components/BottomNav";
-import { CATEGORIES } from "../api";
+import { CATEGORIES } from "../constants/categories";
 
 export default function ItemDetailPage() {
   const { id } = useParams();
