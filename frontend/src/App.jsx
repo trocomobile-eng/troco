@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { AuthProvider, useAuth } from "./context/AuthContext";
 import SplashScreen from "./components/SplashScreen";
+import LandingPage from "./pages/LandingPage";
 
 import LoginPage from "./pages/LoginPage";
 import SignupPage from "./pages/SignupPage";
@@ -125,7 +126,7 @@ function AppRoutes() {
               }
             />
 
-            <Route path="*" element={<Navigate to="/" replace />} />
+            <Route path="/" element={<LandingPage />} />
           </Routes>
         </div>
       </BrowserRouter>
