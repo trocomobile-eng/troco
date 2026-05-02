@@ -186,7 +186,7 @@ export default function ProfilePage() {
   };
 
   return (
-    <div className="page max-w-lg mx-auto min-h-screen pb-24 bg-[radial-gradient(circle_at_top_left,rgba(56,189,248,0.35),transparent_35%),radial-gradient(circle_at_top_right,rgba(16,185,129,0.30),transparent_35%),linear-gradient(180deg,#eefcff,#f4fff8)]">
+    <div className="max-w-lg mx-auto min-h-screen pb-28 bg-[radial-gradient(circle_at_top_left,rgba(56,189,248,0.35),transparent_35%),radial-gradient(circle_at_top_right,rgba(16,185,129,0.30),transparent_35%),linear-gradient(180deg,#eefcff,#f4fff8)]">
       <TrocoPageHeader
         title="Profil"
         subtitle="Ton espace, tes objets, tes préférences."

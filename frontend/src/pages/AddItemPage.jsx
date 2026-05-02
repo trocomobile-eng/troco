@@ -139,7 +139,8 @@ export default function AddItemPage() {
   };
 
   return (
-    <div className="page max-w-lg mx-auto min-h-screen bg-gradient-to-b from-sky-100 via-white to-emerald-50">
+       <div className="max-w-lg mx-auto min-h-screen pb-28 bg-[radial-gradient(circle_at_top_left,rgba(56,189,248,0.35),transparent_35%),radial-gradient(circle_at_top_right,rgba(16,185,129,0.30),transparent_35%),linear-gradient(180deg,#eefcff,#f4fff8)]">
+
       <TopBar title="Publier" back={() => navigate(-1)} />
 
       <div className="px-5 py-5 pb-28 space-y-4">

@@ -4,46 +4,35 @@ export default function BottomNav() {
   const navigate = useNavigate();
   const { pathname } = useLocation();
 
-  const Item = ({ label, icon, path }) => {
-    const active = pathname === path;
-
-    return (
-      <button
-        onClick={() => navigate(path)}
-        className="flex flex-col items-center flex-1 py-2"
-      >
-        <div
-          className={`text-xl ${
-            active ? "text-emerald-600" : "text-slate-400"
-          }`}
-        >
-          {icon}
-        </div>
-
-        <span
-          className={`text-[11px] font-semibold ${
-            active ? "text-emerald-600" : "text-slate-400"
-          }`}
-        >
-          {label}
-        </span>
-      </button>
-    );
-  };
+  const tabs = [
+    { label: "Explorer", icon: "⌂", path: "/feed" },
+    { label: "Messages", icon: "◌", path: "/exchanges" },
+    { label: "Publier", icon: "+", path: "/add" },
+    { label: "Profil", icon: "◍", path: "/profile" },
+  ];
 
   return (
-    <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-100 shadow-sm">
-      <div className="max-w-lg mx-auto flex">
+    <div className="fixed bottom-4 left-0 right-0 z-50 flex justify-center pointer-events-none">
+      <div className="pointer-events-auto bg-white/80 backdrop-blur-xl border border-white shadow-lg rounded-2xl px-2 py-2 flex gap-1">
+        {tabs.map((tab) => {
+          const active = pathname === tab.path;
 
-        <Item label="Explorer" icon="🔍" path="/feed" />
-
-        <Item label="Messages" icon="💬" path="/exchanges" />
-
-        <Item label="Publier" icon="➕" path="/add" />
-
-        <Item label="Profil" icon="👤" path="/profile" />
-
+          return (
+            <button
+              key={tab.path}
+              onClick={() => navigate(tab.path)}
+              className={`flex flex-col items-center justify-center min-w-[68px] px-2 py-1.5 rounded-xl text-[11px] font-bold transition ${
+                active
+                  ? "text-white bg-gradient-to-r from-sky-500 to-emerald-500"
+                  : "text-slate-500"
+              }`}
+            >
+              <span className="text-base leading-none mb-1">{tab.icon}</span>
+              {tab.label}
+            </button>
+          );
+        })}
       </div>
     </div>
   );
-}
+}	

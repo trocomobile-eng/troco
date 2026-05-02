@@ -90,6 +90,17 @@ function AppRoutes() {
               }
             />
 
+           <Route
+            path="/profile"
+            element={
+             <PrivateRoute>
+              <ProfilePage />
+             </PrivateRoute>
+             }
+           />
+
+           <Route path="*" element={<Navigate to="/" replace />} />
+
             <Route
               path="/exchanges"
               element={
