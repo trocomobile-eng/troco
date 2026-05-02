@@ -1,0 +1,286 @@
+<!DOCTYPE html>
+<html lang="fr">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Troco</title>
+
+    <style>
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+        color: #25342f;
+        background:
+          radial-gradient(circle at top, rgba(145, 205, 255, 0.5), transparent 45%),
+          linear-gradient(180deg, #dff2ff 0%, #f1f9ff 100%);
+      }
+
+      .hero {
+        min-height: 55vh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        text-align: center;
+        padding: 24px 24px 0px;
+      }
+
+      .logo {
+        width: 680px;
+        max-width: 96vw;
+        display: block;
+        margin: 0 auto -40px;
+        filter: drop-shadow(0 20px 40px rgba(0, 0, 0, 0.08));
+        opacity: 0;
+        animation: fadeLogo 1.8s ease-out forwards;
+        animation-delay: 0.2s;
+      }
+
+      .tagline {
+        margin: 0;
+        font-size: 16px;
+        color: #5f7480;
+        letter-spacing: 0.3px;
+        opacity: 0;
+        animation: fadeText 1.4s ease-out forwards;
+        animation-delay: 0.9s;
+      }
+
+      .presentation {
+        max-width: 980px;
+        margin: 0 auto;
+        padding: 10px 22px 40px;
+      }
+
+      .intro {
+        text-align: center;
+        margin-bottom: 42px;
+      }
+
+      .intro h2 {
+        font-size: clamp(32px, 5vw, 56px);
+        letter-spacing: -1.8px;
+        line-height: 1;
+        margin: 0 0 18px;
+      }
+
+      .intro p {
+        max-width: 650px;
+        margin: 0 auto;
+        font-size: 18px;
+        line-height: 1.6;
+        color: #5f7480;
+      }
+
+      .cards {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 18px;
+        margin-top: 34px;
+      }
+
+      .card {
+        background: rgba(255, 255, 255, 0.55);
+        border: 1px solid rgba(37, 52, 47, 0.08);
+        border-radius: 28px;
+        padding: 28px;
+        backdrop-filter: blur(18px);
+        box-shadow: 0 20px 60px rgba(37, 52, 47, 0.08);
+      }
+
+      .number {
+        width: 38px;
+        height: 38px;
+        border-radius: 999px;
+        background: #25342f;
+        color: white;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: 700;
+        margin-bottom: 18px;
+      }
+
+      .card h3 {
+        margin: 0 0 10px;
+        font-size: 21px;
+        letter-spacing: -0.3px;
+      }
+
+      .card p {
+        margin: 0;
+        color: #5f7480;
+        line-height: 1.55;
+        font-size: 15.5px;
+      }
+
+      .faq {
+        margin-top: 24px;
+        background: rgba(255, 255, 255, 0.48);
+        border: 1px solid rgba(37, 52, 47, 0.08);
+        border-radius: 34px;
+        padding: 32px;
+        box-shadow: 0 20px 60px rgba(37, 52, 47, 0.07);
+      }
+
+      .faq h3 {
+        margin: 0 0 22px;
+        font-size: 28px;
+        letter-spacing: -0.8px;
+      }
+
+      details {
+        border-top: 1px solid rgba(37, 52, 47, 0.12);
+        padding: 18px 0;
+      }
+
+      details:last-child {
+        padding-bottom: 0;
+      }
+
+      summary {
+        cursor: pointer;
+        list-style: none;
+        font-size: 17px;
+        font-weight: 600;
+      }
+
+      summary::-webkit-details-marker {
+        display: none;
+      }
+
+      summary::after {
+        content: "+";
+        float: right;
+        font-size: 22px;
+        color: #5f7480;
+      }
+
+      details[open] summary::after {
+        content: "–";
+      }
+
+      details p {
+        margin: 12px 0 0;
+        color: #5f7480;
+        line-height: 1.55;
+      }
+
+      @keyframes fadeLogo {
+        from {
+          opacity: 0;
+          transform: translateY(30px) scale(0.96);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0) scale(1);
+        }
+      }
+
+      @keyframes fadeText {
+        from {
+          opacity: 0;
+          transform: translateY(8px);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+
+      @media (max-width: 760px) {
+        .logo {
+          width: 460px;
+          max-width: 112vw;
+          margin-bottom: -22px;
+        }
+
+        .tagline {
+          font-size: 15px;
+        }
+
+        .hero {
+          min-height: 86vh;
+        }
+
+        .cards {
+          grid-template-columns: 1fr;
+        }
+
+        .presentation {
+          padding-top: 20px;
+        }
+
+        .faq {
+          padding: 26px;
+        }
+      }
+    </style>
+  </head>
+
+  <body>
+    <section class="hero">
+      <div>
+        <img src="/logo.png" alt="Troco" class="logo" />
+      </div>
+    </section>
+
+    <section class="presentation">
+      <div class="intro">
+        <p>
+          Troco est une application d’échange non monétaire pensée pour faire circuler les objets,
+          créer du lien et réduire le gaspillage.
+        </p>
+      </div>
+
+      <div class="cards">
+        <div class="card">
+          <div class="number">1</div>
+          <h3>Ajoutez un objet</h3>
+          <p>Publiez ce que vous n’utilisez plus avec une photo simple et une courte description.</p>
+        </div>
+
+        <div class="card">
+          <div class="number">2</div>
+          <h3>Découvrez</h3>
+          <p>Parcourez les objets disponibles autour de vous et repérez ceux qui vous intéressent.</p>
+        </div>
+
+        <div class="card">
+          <div class="number">3</div>
+          <h3>Échangez</h3>
+          <p>Si deux personnes sont d’accord, l’échange se fait simplement, sans argent.</p>
+        </div>
+      </div>
+
+      <div class="faq">
+        <h3>Questions fréquentes</h3>
+
+        <details>
+          <summary>Est-ce que Troco est vraiment sans argent ?</summary>
+          <p>Oui. Troco repose sur le troc : on échange des objets, sans achat ni vente.</p>
+        </details>
+
+        <details>
+          <summary>Quels objets peut-on échanger ?</summary>
+          <p>Livres, vêtements, déco, petits meubles, instruments, objets du quotidien… tant que l’échange a du sens pour les deux personnes.</p>
+        </details>
+
+        <details>
+          <summary>Les échanges doivent-ils être parfaitement équitables ?</summary>
+          <p>Pas forcément. L’important est que les deux personnes soient satisfaites de l’échange.</p>
+        </details>
+
+        <details>
+          <summary>Où se passent les échanges ?</summary>
+          <p>Idéalement dans des lieux publics, simples et rassurants, comme des cafés ou des lieux partenaires.</p>
+        </details>
+        <div id="root"></div>
+<script type="module" src="/src/main.jsx"></script>
+      </div>
+    </section>
+  </body>
+</html>
