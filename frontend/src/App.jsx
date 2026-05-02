@@ -98,25 +98,6 @@ function AppRoutes() {
                 </PrivateRoute>
               }
             />
-
-            <Route
-              path="/exchanges/:id"
-              element={
-                <PrivateRoute>
-                  <ExchangeDetailPage />
-                </PrivateRoute>
-              }
-            />
-
-            <Route
-              path="/profile"
-              element={
-                <PrivateRoute>
-                  <ProfilePage />
-                </PrivateRoute>
-              }
-            />
-
             <Route
               path="/user/:id"
               element={
@@ -126,8 +107,8 @@ function AppRoutes() {
               }
             />
 
-          </Routes>
-        </div>
+            <Route path="*" element={<Navigate to="/" replace />} />
+          </Routes>        </div>
       </BrowserRouter>
     </>
   );
