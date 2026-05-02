@@ -13,130 +13,133 @@ import ExchangesPage from "./pages/ExchangesPage";
 import ExchangeDetailPage from "./pages/ExchangeDetailPage";
 import ProfilePage from "./pages/ProfilePage";
 import UserItemsPage from "./pages/UserItemsPage";
+import AvailabilityPage from "./pages/AvailabilityPage";
 
 function PrivateRoute({ children }) {
-  const { user, loading } = useAuth();
-
-  if (loading) return null;
-
-  return user ? children : <Navigate to="/login" replace />;
+const { user, loading } = useAuth();
+if (loading) return null;
+return user ? children : <Navigate to="/login" replace />;
 }
 
 function PublicRoute({ children }) {
-  const { user, loading } = useAuth();
-
-  if (loading) return null;
-
-  return !user ? children : <Navigate to="/feed" replace />;
+const { user, loading } = useAuth();
+if (loading) return null;
+return !user ? children : <Navigate to="/feed" replace />;
 }
 
 function AppRoutes() {
-  const [showSplash, setShowSplash] = useState(true);
+const [showSplash, setShowSplash] = useState(true);
 
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      setShowSplash(false);
-    }, 2500);
+useEffect(() => {
+const timer = setTimeout(() => setShowSplash(false), 2500);
+return () => clearTimeout(timer);
+}, []);
 
-    return () => clearTimeout(timer);
-  }, []);
+return (
+<>
+<SplashScreen show={showSplash} />
 
-  return (
-    <>
-      <SplashScreen show={showSplash} />
+<BrowserRouter>
+<div className="max-w-lg mx-auto min-h-screen">
+<Routes>
+<Route path="/" element={<Navigate to="/feed" replace />} />
 
-      <BrowserRouter>
-        <div className="max-w-lg mx-auto min-h-screen">
-          <Routes>
-            <Route path="/" element={<Navigate to="/feed" replace />} />
+<Route
+path="/login"
+element={
+<PublicRoute>
+<LoginPage />
+</PublicRoute>
+}
+/>
 
-            <Route
-              path="/login"
-              element={
-                <PublicRoute>
-                  <LoginPage />
-                </PublicRoute>
-              }
-            />
+<Route
+path="/signup"
+element={
+<PublicRoute>
+<SignupPage />
+</PublicRoute>
+}
+/>
 
-            <Route
-              path="/signup"
-              element={
-                <PublicRoute>
-                  <SignupPage />
-                </PublicRoute>
-              }
-            />
+<Route path="/feed" element={<FeedPage />} />
+<Route path="/items/:id" element={<ItemDetailPage />} />
 
-            <Route path="/feed" element={<FeedPage />} />
-            <Route path="/items/:id" element={<ItemDetailPage />} />
+<Route
+path="/add"
+element={
+<PrivateRoute>
+<AddItemPage />
+</PrivateRoute>
+}
+/>
 
-            <Route
-              path="/add"
-              element={
-                <PrivateRoute>
-                  <AddItemPage />
-                </PrivateRoute>
-              }
-            />
+<Route
+path="/propose/:itemId"
+element={
+<PrivateRoute>
+<ProposeExchangePage />
+</PrivateRoute>
+}
+/>
 
-            <Route
-              path="/propose/:itemId"
-              element={
-                <PrivateRoute>
-                  <ProposeExchangePage />
-                </PrivateRoute>
-              }
-            />
+<Route
+path="/exchanges"
+element={
+<PrivateRoute>
+<ExchangesPage />
+</PrivateRoute>
+}
+/>
 
-            <Route
-              path="/exchanges"
-              element={
-                <PrivateRoute>
-                  <ExchangesPage />
-                </PrivateRoute>
-              }
-            />
+<Route
+path="/exchanges/:id"
+element={
+<PrivateRoute>
+<ExchangeDetailPage />
+</PrivateRoute>
+}
+/>
 
-            <Route
-              path="/exchanges/:id"
-              element={
-                <PrivateRoute>
-                  <ExchangeDetailPage />
-                </PrivateRoute>
-              }
-            />
+<Route
+path="/availability/:id"
+element={
+<PrivateRoute>
+<AvailabilityPage />
+</PrivateRoute>
+}
+/>
 
-            <Route
-              path="/profile"
-              element={
-                <PrivateRoute>
-                  <ProfilePage />
-                </PrivateRoute>
-              }
-            />
+<Route
+path="/profile"
+element={
+<PrivateRoute>
+<ProfilePage />
+</PrivateRoute>
+}
+/>
 
-            <Route
-              path="/user/:id"
-              element={
-                <PrivateRoute>
-                  <UserItemsPage />
-                </PrivateRoute>
-              }
-            />
+<Route
+path="/user/:id"
+element={
+<PrivateRoute>
+<UserItemsPage />
+</PrivateRoute>
+}
+/>
 
-            <Route path="*" element={<Navigate to="/feed" replace />} />
-          </Routes>
-        </div>
-      </BrowserRouter>
-    </>
-  );
+<Route path="*" element={<Navigate to="/feed" replace />} />
+</Routes>
+</div>
+</BrowserRouter>
+</>
+);
 }
 
 export default function App() {
-  return (
-    <AuthProvider>
-      <AppRoutes />
-    </AuthProvider>
-  );
+return (
+<AuthProvider>
+<AppRoutes />
+</AuthProvider>
+);
 }

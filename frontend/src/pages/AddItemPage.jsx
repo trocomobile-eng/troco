@@ -1,206 +1,205 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { api } from "../api";
 import { TopBar, CategorySelect } from "../components/UI";
 import BottomNav from "../components/BottomNav";
 import { useAuth } from "../context/AuthContext";
+import { db, storage } from "../firebase";
+import { collection, addDoc, serverTimestamp } from "firebase/firestore";
+import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
 
 const ARRONDISSEMENTS = [
- "Paris 1", "Paris 2", "Paris 3", "Paris 4", "Paris 5",
- "Paris 6", "Paris 7", "Paris 8", "Paris 9", "Paris 10",
- "Paris 11", "Paris 12", "Paris 13", "Paris 14", "Paris 15",
- "Paris 16", "Paris 17", "Paris 18", "Paris 19", "Paris 20",
- "Autre",
+  "Paris 1", "Paris 2", "Paris 3", "Paris 4", "Paris 5",
+  "Paris 6", "Paris 7", "Paris 8", "Paris 9", "Paris 10",
+  "Paris 11", "Paris 12", "Paris 13", "Paris 14", "Paris 15",
+  "Paris 16", "Paris 17", "Paris 18", "Paris 19", "Paris 20",
+  "Autre",
 ];
 
 export default function AddItemPage() {
- const navigate = useNavigate();
- const { token } = useAuth();
+  const navigate = useNavigate();
+  const { user, loading: authLoading } = useAuth();
 
- const [form, setForm] = useState({
- title: "",
- description: "",
- category: "",
- image_url: "",
- open_to_all: true,
- wanted_categories: [],
- location_area: "",
- location_details: "",
- });
+  const [form, setForm] = useState({
+    title: "",
+    description: "",
+    category: "",
+    location_area: "",
+    location_details: "",
+  });
 
- const [imageFile, setImageFile] = useState(null);
- const [preview, setPreview] = useState("");
- const [loading, setLoading] = useState(false);
- const [error, setError] = useState("");
+  const [imageFile, setImageFile] = useState(null);
+  const [preview, setPreview] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
 
- const set = (key) => (value) => {
- setForm((current) => ({
- ...current,
- [key]: value?.target ? value.target.value : value,
- }));
- };
+  const set = (key) => (value) => {
+    setForm((current) => ({
+      ...current,
+      [key]: value?.target ? value.target.value : value,
+    }));
+  };
 
- const handleImage = (e) => {
- const file = e.target.files?.[0];
- if (!file) return;
+  const handleImage = (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
 
- setImageFile(file);
- setPreview(URL.createObjectURL(file));
- set("image_url")("");
- };
+    setImageFile(file);
+    setPreview(URL.createObjectURL(file));
+  };
 
- const handleSubmit = async () => {
- if (!token) return setError("Vous devez être connecté.");
+  const handleSubmit = async () => {
+    setError("");
 
- if (!form.title || !form.description || !form.category || !form.location_area) {
- return setError("Titre, description, catégorie et arrondissement sont requis.");
- }
+    if (authLoading) {
+      return setError("Connexion en cours, réessaie dans une seconde.");
+    }
 
- if (form.location_area === "Autre" && !form.location_details.trim()) {
- return setError("Merci de préciser la localisation.");
- }
+    if (!user?.uid) {
+      return setError("Vous devez être connecté pour publier un objet.");
+    }
 
- setLoading(true);
- setError("");
+    if (!form.title || !form.description || !form.category || !form.location_area) {
+      return setError("Titre, description, catégorie et arrondissement sont requis.");
+    }
 
- try {
- const fd = new FormData();
- fd.append("title", form.title);
- fd.append("description", form.description);
- fd.append("category", form.category);
- fd.append("open_to_all", String(form.open_to_all));
- fd.append("wanted_categories", JSON.stringify(form.wanted_categories));
- fd.append("location_area", form.location_area);
- fd.append("location_details", form.location_details);
+    if (form.location_area === "Autre" && !form.location_details.trim()) {
+      return setError("Merci de préciser la localisation.");
+    }
 
- if (imageFile) fd.append("image", imageFile);
- else if (form.image_url) fd.append("image_url", form.image_url);
+    setLoading(true);
 
- const result = await api.createItem(fd, token);
- if (result?.error) throw new Error(result.error);
+    try {
+      let imageUrl = "";
 
- navigate("/profile");
- } catch (e) {
- setError(e.message || "Erreur lors de la publication.");
- } finally {
- setLoading(false);
- }
- };
+      if (imageFile) {
+        const cleanName = imageFile.name.replace(/\s+/g, "-").toLowerCase();
+        const imageRef = ref(
+          storage,
+          `items/${user.uid}/${Date.now()}-${cleanName}`
+        );
 
- return (
- <div className="page max-w-lg mx-auto">
- <TopBar title="Publier" back={() => navigate(-1)} />
+        await uploadBytes(imageRef, imageFile);
+        imageUrl = await getDownloadURL(imageRef);
+      }
 
- <div className="px-5 py-5 pb-28 space-y-4">
- <div>
- <h1 className="text-2xl font-black text-troco-dark">
- Nouvel objet
- </h1>
- <p className="text-sm text-troco-muted mt-1">
- Ajoute une photo, une description et ton arrondissement.
- </p>
- </div>
+      await addDoc(collection(db, "items"), {
+        title: form.title.trim(),
+        description: form.description.trim(),
+        category: form.category,
+        imageUrl,
+        ownerId: user.uid,
+        ownerEmail: user.email || "",
+        ownerName: user.displayName || "",
+        locationArea: form.location_area,
+        locationDetails: form.location_details.trim(),
+        status: "active",
+        createdAt: serverTimestamp(),
+      });
 
- {error && (
- <div className="bg-red-50 border border-red-200 text-red-600 text-sm rounded-xl px-4 py-3">
- {error}
- </div>
- )}
+      navigate("/profile");
+    } catch (e) {
+      console.error("Erreur publication :", e);
+      setError(e.message || "Erreur lors de la publication.");
+    } finally {
+      setLoading(false);
+    }
+  };
 
- <div className="bg-white rounded-[2rem] border border-gray-100 shadow-sm p-4">
- {preview ? (
- <div className="relative rounded-2xl overflow-hidden h-64 bg-troco-sand">
- <img
- src={preview}
- alt="preview"
- className="w-full h-full object-contain"
- />
- <button
- type="button"
- className="absolute top-2 right-2 bg-black/50 text-white w-8 h-8 rounded-full text-sm"
- onClick={() => {
- setPreview("");
- setImageFile(null);
- }}
- >
- ✕
- </button>
- </div>
- ) : (
- <label className="flex flex-col items-center justify-center h-44 bg-troco-sand/50 border-2 border-dashed border-troco-sand rounded-2xl cursor-pointer active:scale-[0.98] transition">
- <span className="text-3xl mb-2"> </span>
- <span className="text-sm font-black text-troco-dark">
- Importer une photo
- </span>
- <span className="text-xs text-troco-muted mt-1">
- JPG, PNG — 5 Mo max
- </span>
- <input
- type="file"
- accept="image/*"
- className="hidden"
- onChange={handleImage}
- />
- </label>
- )}
- </div>
+  return (
+    <div className="page max-w-lg mx-auto">
+      <TopBar title="Publier" back={() => navigate(-1)} />
 
- <input
- className="input"
- placeholder="Titre de l’objet"
- value={form.title}
- onChange={set("title")}
- />
+      <div className="px-5 py-5 pb-28 space-y-4">
+        <div>
+          <h1 className="text-2xl font-black text-troco-dark">Nouvel objet</h1>
+          <p className="text-sm text-troco-muted mt-1">
+            Ajoute une photo, une description et ton arrondissement.
+          </p>
+        </div>
 
- <textarea
- className="input resize-none"
- rows={3}
- placeholder="Description : état, marque, détails..."
- value={form.description}
- onChange={set("description")}
- />
+        {error && (
+          <div className="bg-red-50 border border-red-200 text-red-600 text-sm rounded-xl px-4 py-3">
+            {error}
+          </div>
+        )}
 
- <CategorySelect value={form.category} onChange={set("category")} />
+        <div className="bg-white rounded-[2rem] border border-gray-100 shadow-sm p-4">
+          {preview ? (
+            <div className="relative rounded-2xl overflow-hidden h-64 bg-troco-sand">
+              <img src={preview} alt="preview" className="w-full h-full object-contain" />
+              <button
+                type="button"
+                className="absolute top-2 right-2 bg-black/50 text-white w-8 h-8 rounded-full text-sm"
+                onClick={() => {
+                  setPreview("");
+                  setImageFile(null);
+                }}
+              >
+                ✕
+              </button>
+            </div>
+          ) : (
+            <label className="flex flex-col items-center justify-center h-44 bg-troco-sand/50 border-2 border-dashed border-troco-sand rounded-2xl cursor-pointer active:scale-[0.98] transition">
+              <span className="text-3xl mb-2">📷</span>
+              <span className="text-sm font-black text-troco-dark">Importer une photo</span>
+              <span className="text-xs text-troco-muted mt-1">JPG, PNG — 5 Mo max</span>
+              <input type="file" accept="image/*" className="hidden" onChange={handleImage} />
+            </label>
+          )}
+        </div>
 
- <div className="bg-white rounded-[2rem] border border-gray-100 shadow-sm p-4">
- <label className="block text-sm font-black text-troco-dark mb-2">
- Dans quel arrondissement ?
- </label>
+        <input
+          className="input"
+          placeholder="Titre de l’objet"
+          value={form.title}
+          onChange={set("title")}
+        />
 
- <select
- className="input"
- value={form.location_area}
- onChange={set("location_area")}
- >
- <option value="">Choisir un arrondissement</option>
- {ARRONDISSEMENTS.map((a) => (
- <option key={a} value={a}>
- {a}
- </option>
- ))}
- </select>
+        <textarea
+          className="input resize-none"
+          rows={3}
+          placeholder="Description : état, marque, détails..."
+          value={form.description}
+          onChange={set("description")}
+        />
 
- {form.location_area === "Autre" && (
- <input
- className="input mt-3"
- placeholder="Précise la ville ou le quartier"
- value={form.location_details}
- onChange={set("location_details")}
- />
- )}
- </div>
+        <CategorySelect value={form.category} onChange={set("category")} />
 
- <button
- type="button"
- className="btn-primary w-full text-base"
- onClick={handleSubmit}
- disabled={loading}
- >
- {loading ? "Publication..." : "Publier mon objet"}
- </button>
- </div>
+        <div className="bg-white rounded-[2rem] border border-gray-100 shadow-sm p-4">
+          <label className="block text-sm font-black text-troco-dark mb-2">
+            Dans quel arrondissement ?
+          </label>
 
- <BottomNav />
- </div>
- );
+          <select className="input" value={form.location_area} onChange={set("location_area")}>
+            <option value="">Choisir un arrondissement</option>
+            {ARRONDISSEMENTS.map((a) => (
+              <option key={a} value={a}>
+                {a}
+              </option>
+            ))}
+          </select>
+
+          {form.location_area === "Autre" && (
+            <input
+              className="input mt-3"
+              placeholder="Précise la ville ou le quartier"
+              value={form.location_details}
+              onChange={set("location_details")}
+            />
+          )}
+        </div>
+
+        <button
+          type="button"
+          className="btn-primary w-full text-base"
+          onClick={handleSubmit}
+          disabled={loading || authLoading}
+        >
+          {loading ? "Publication..." : authLoading ? "Connexion..." : "Publier mon objet"}
+        </button>
+      </div>
+
+      <BottomNav />
+    </div>
+  );
 }

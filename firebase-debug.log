@@ -1,0 +1,21 @@
+[debug] [2026-05-02T06:10:42.904Z] ----------------------------------------------------------------------
+[debug] [2026-05-02T06:10:42.907Z] Command:       /Users/alexandreranson/.nvm/versions/node/v18.20.8/bin/node /Users/alexandreranson/.nvm/versions/node/v18.20.8/bin/firebase init
+[debug] [2026-05-02T06:10:42.908Z] CLI Version:   13.35.1
+[debug] [2026-05-02T06:10:42.908Z] Platform:      darwin
+[debug] [2026-05-02T06:10:42.908Z] Node Version:  v18.20.8
+[debug] [2026-05-02T06:10:42.910Z] Time:          Sat May 02 2026 08:10:42 GMT+0200 (Central European Summer Time)
+[debug] [2026-05-02T06:10:42.910Z] ----------------------------------------------------------------------
+[debug] 
+[debug] [2026-05-02T06:10:42.917Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform"]
+[debug] [2026-05-02T06:10:42.918Z] > authorizing via signed-in user (troco.mobile@gmail.com)
+[info] 
+     ######## #### ########  ######## ########     ###     ######  ########
+     ##        ##  ##     ## ##       ##     ##  ##   ##  ##       ##
+     ######    ##  ########  ######   ########  #########  ######  ######
+     ##        ##  ##    ##  ##       ##     ## ##     ##       ## ##
+     ##       #### ##     ## ######## ########  ##     ##  ######  ########
+
+You're about to initialize a Firebase project in this directory:
+
+  /Users/alexandreranson/troco
+

@@ -1,20 +1,40 @@
 import { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
-import { useAuth } from "../context/AuthContext";
+import { auth } from "../firebase";
+import {
+  signInWithEmailAndPassword,
+  GoogleAuthProvider,
+  signInWithPopup,
+} from "firebase/auth";
 
 export default function LoginPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
-  const { login } = useAuth();
   const navigate = useNavigate();
 
   const handleSubmit = async () => {
     setError("");
     setLoading(true);
+
     try {
-      await login(email, password);
+      await signInWithEmailAndPassword(auth, email, password);
+      navigate("/feed");
+    } catch (e) {
+      setError(e.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleGoogleLogin = async () => {
+    setError("");
+    setLoading(true);
+
+    try {
+      const provider = new GoogleAuthProvider();
+      await signInWithPopup(auth, provider);
       navigate("/feed");
     } catch (e) {
       setError(e.message);
@@ -25,7 +45,6 @@ export default function LoginPage() {
 
   return (
     <div className="min-h-screen bg-troco-cream flex flex-col">
-      {/* Hero */}
       <div className="bg-troco-green text-white px-8 pt-16 pb-12 rounded-b-[3rem]">
         <div className="text-5xl mb-3">🔄</div>
         <h1 className="font-display text-4xl mb-2">Troco</h1>
@@ -45,6 +64,14 @@ export default function LoginPage() {
           </div>
         )}
 
+        <button
+          className="w-full mb-5 bg-white border border-gray-200 rounded-xl py-3 font-medium text-troco-dark shadow-sm"
+          onClick={handleGoogleLogin}
+          disabled={loading}
+        >
+          Continuer avec Google
+        </button>
+
         <div className="space-y-3 mb-6">
           <input
             className="input"
@@ -54,6 +81,7 @@ export default function LoginPage() {
             onChange={(e) => setEmail(e.target.value)}
             autoComplete="email"
           />
+
           <input
             className="input"
             type="password"

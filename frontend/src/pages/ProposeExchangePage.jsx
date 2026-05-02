@@ -1,304 +1,349 @@
-import { useState, useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate, useParams, useSearchParams } from "react-router-dom";
-import { api, imageUrl } from "../api";
+import { db } from "../firebase";
 import { useAuth } from "../context/AuthContext";
 import {
- TopBar,
- LoadingSpinner,
- EmptyState,
- CategoryBadge,
- ItemPlaceholder,
-} from "../components/UI";
+  collection,
+  addDoc,
+  getDoc,
+  getDocs,
+  doc,
+  query,
+  where,
+  updateDoc,
+  serverTimestamp,
+} from "firebase/firestore";
 import BottomNav from "../components/BottomNav";
 
 export default function ProposeExchangePage() {
- const { itemId } = useParams();
- const navigate = useNavigate();
- const { token } = useAuth();
- const [searchParams] = useSearchParams();
+  const { itemId } = useParams();
+  const [searchParams] = useSearchParams();
+  const navigate = useNavigate();
+  const { user, loading: authLoading } = useAuth();
 
- const mode = searchParams.get("mode");
- const fromExchangeId = searchParams.get("from");
- const isCounter = mode === "counter" && fromExchangeId;
+  const mode = searchParams.get("mode");
+  const fromExchangeId = searchParams.get("from");
+  const isCounter = mode === "counter" && fromExchangeId;
 
- const [items, setItems] = useState([]);
- const [originalOfferedIds, setOriginalOfferedIds] = useState([]);
- const [selectedIds, setSelectedIds] = useState([]);
- const [message, setMessage] = useState(
- isCounter
- ? "Je suis intéressé, mais je préférerais cet objet / ces objets "
- : ""
- );
- const [loading, setLoading] = useState(true);
- const [sending, setSending] = useState(false);
- const [error, setError] = useState("");
+  const [requestedItem, setRequestedItem] = useState(null);
+  const [exchange, setExchange] = useState(null);
+  const [items, setItems] = useState([]);
+  const [selectedIds, setSelectedIds] = useState([]);
+  const [message, setMessage] = useState(
+    isCounter ? "Je suis intéressé, mais je préférerais plutôt..." : ""
+  );
+  const [loading, setLoading] = useState(true);
+  const [sending, setSending] = useState(false);
+  const [error, setError] = useState("");
 
- useEffect(() => {
- if (!token) {
- navigate("/login");
- return;
- }
+  useEffect(() => {
+    if (authLoading) return;
 
- async function load() {
- setLoading(true);
- setError("");
+    if (!user) {
+      navigate("/login");
+      return;
+    }
 
- try {
- if (isCounter) {
- const exchange = await api.getExchange(fromExchangeId, token);
- if (exchange?.error) throw new Error(exchange.error);
+    async function loadData() {
+      setLoading(true);
+      setError("");
 
- if (exchange.counter_status === "pending") {
- setError("Une négociation est déjà en attente de réponse.");
- setLoading(false);
- return;
- }
+      try {
+        if (isCounter) {
+          const exchangeSnap = await getDoc(doc(db, "exchanges", fromExchangeId));
 
- const offeredIds = Array.isArray(exchange.offered_item_ids)
- ? exchange.offered_item_ids.map(Number)
- : [];
+          if (!exchangeSnap.exists()) {
+            setError("Échange introuvable.");
+            return;
+          }
 
- setOriginalOfferedIds(offeredIds);
+          const ex = {
+            id: exchangeSnap.id,
+            ...exchangeSnap.data(),
+          };
 
- const stock = await api.getUserItems(exchange.proposer_id, token);
- setItems(Array.isArray(stock) ? stock : []);
- } else {
- const myItems = await api.getMyItems(token);
- setItems(
- Array.isArray(myItems)
- ? myItems.filter((i) => i.status === "active")
- : []
- );
- }
- } catch (e) {
- setError(e.message || "Erreur de chargement");
- } finally {
- setLoading(false);
- }
- }
+          setExchange(ex);
 
- load();
- }, [token, navigate, isCounter, fromExchangeId]);
+          if (ex.counterStatus === "pending") {
+            setError("Une négociation est déjà en attente de réponse.");
+            return;
+          }
 
- const toggleItem = (id) => {
- const numericId = Number(id);
+          const requestedSnap = await getDoc(doc(db, "items", ex.requestedItemId));
 
- setSelectedIds((current) => {
- if (current.includes(numericId)) {
- return current.filter((x) => x !== numericId);
- }
+          if (requestedSnap.exists()) {
+            setRequestedItem({
+              id: requestedSnap.id,
+              ...requestedSnap.data(),
+            });
+          }
 
- if (current.length >= 2) return current;
+          const q = query(
+            collection(db, "items"),
+            where("ownerId", "==", ex.senderId),
+            where("status", "==", "active")
+          );
 
- return [...current, numericId];
- });
- };
+          const snapshot = await getDocs(q);
 
- const submit = async () => {
- if (selectedIds.length === 0) {
- setError("Choisis au moins un objet.");
- return;
- }
+          const list = snapshot.docs.map((doc) => ({
+            id: doc.id,
+            ...doc.data(),
+          }));
 
- setSending(true);
- setError("");
+          setItems(list);
+        } else {
+          const itemSnap = await getDoc(doc(db, "items", itemId));
 
- try {
- let res;
+          if (!itemSnap.exists()) {
+            setError("Objet introuvable.");
+            return;
+          }
 
- if (isCounter) {
- res = await api.sendCounterProposal(
- fromExchangeId,
- {
- requested_item_ids: selectedIds,
- message,
- },
- token
- );
- } else {
- res = await api.proposeExchange(
- {
- offered_item_ids: selectedIds,
- requested_item_id: Number(itemId),
- message,
- },
- token
- );
- }
+          const item = {
+            id: itemSnap.id,
+            ...itemSnap.data(),
+          };
 
- if (res?.error) throw new Error(res.error);
+          setRequestedItem(item);
 
- navigate("/exchanges", { replace: true });
- } catch (e) {
- setError(e.message || "Erreur lors de l’envoi.");
- } finally {
- setSending(false);
- }
- };
+          const q = query(
+            collection(db, "items"),
+            where("ownerId", "==", user.uid),
+            where("status", "==", "active")
+          );
 
- return (
- <div className="page max-w-lg mx-auto">
- <TopBar
- title={isCounter ? "Négocier" : "Proposer"}
- back={() => navigate(-1)}
- />
+          const snapshot = await getDocs(q);
 
- <div className="px-5 py-5 pb-36 space-y-5">
- <div className="bg-white rounded-[2rem] border border-gray-100 shadow-sm p-5">
- <p className="text-xs uppercase font-bold text-troco-green mb-2">
- {isCounter ? "Modification de l’échange" : "Nouvelle proposition"}
- </p>
+          const list = snapshot.docs.map((doc) => ({
+            id: doc.id,
+            ...doc.data(),
+          }));
 
- <h1 className="text-xl font-bold text-troco-dark">
- {isCounter
- ? "Quels objets veux-tu demander ?"
- : "Quels objets veux-tu proposer ?"}
- </h1>
+          setItems(list);
+        }
+      } catch (e) {
+        console.error(e);
+        setError("Erreur de chargement.");
+      } finally {
+        setLoading(false);
+      }
+    }
 
- <p className="text-sm text-troco-muted mt-2 leading-relaxed">
- {isCounter
- ? "Sélectionne jusqu’à 2 objets dans la bibliothèque de l’autre personne."
- : "Sélectionne jusqu’à 2 objets de ta bibliothèque pour faire une proposition."}
- </p>
- </div>
+    loadData();
+  }, [authLoading, user, navigate, itemId, isCounter, fromExchangeId]);
 
- {error && (
- <div className="bg-red-50 border border-red-200 text-red-600 text-sm rounded-2xl px-4 py-3">
- {error}
- </div>
- )}
+  const toggleItem = (id) => {
+    setSelectedIds((current) => {
+      if (current.includes(id)) {
+        return current.filter((x) => x !== id);
+      }
 
- {loading ? (
- <LoadingSpinner />
- ) : items.length === 0 ? (
- <EmptyState
- icon=" "
- title="Aucun objet disponible"
- subtitle={
- isCounter
- ? "Cette personne n’a aucun autre objet actif."
- : "Publie d’abord un objet."
- }
- />
- ) : (
- <div className="grid grid-cols-2 gap-3">
- {items.map((item) => {
- const selected = selectedIds.includes(Number(item.id));
- const wasAlreadyOffered = originalOfferedIds.includes(
- Number(item.id)
- );
- const img = imageUrl(item.image_url);
+      if (current.length >= 2) return current;
 
- return (
- <button
- key={item.id}
- type="button"
- onClick={() => toggleItem(item.id)}
- className={`relative overflow-hidden rounded-[1.6rem] border text-left bg-white shadow-sm active:scale-[0.98] transition ${
- selected
- ? "border-troco-green ring-2 ring-troco-green/30"
- : "border-gray-100"
- }`}
- >
- <div className="h-36 bg-troco-sand overflow-hidden">
- {img ? (
- <img
- src={img}
- alt={item.title || "Objet"}
- className="w-full h-full object-cover"
- />
- ) : (
- <ItemPlaceholder className="w-full h-full" />
- )}
- </div>
+      return [...current, id];
+    });
+  };
 
- <div className="p-3 space-y-2">
- <div className="flex items-start justify-between gap-2">
- <p className="font-bold text-sm text-troco-dark leading-tight line-clamp-2">
- {item.title || "Sans titre"}
- </p>
+  const submit = async () => {
+    if (!user) return setError("Vous devez être connecté.");
+    if (selectedIds.length === 0) return setError("Choisis au moins un objet.");
 
- <span
- className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold flex-shrink-0 ${
- selected
- ? "bg-troco-green text-white"
- : "bg-gray-100 text-gray-300"
- }`}
- >
- {selected ? "✓" : ""}
- </span>
- </div>
+    setSending(true);
+    setError("");
 
- <CategoryBadge category={item.category} />
- </div>
+    try {
+      if (isCounter) {
+        await updateDoc(doc(db, "exchanges", fromExchangeId), {
+          counterStatus: "pending",
+          counterRequestedItemIds: selectedIds,
+          counterMessage: message.trim(),
+          updatedAt: serverTimestamp(),
+        });
+      } else {
+        if (!requestedItem?.ownerId) {
+          throw new Error("Impossible d’identifier le propriétaire de l’objet.");
+        }
 
- {wasAlreadyOffered && (
- <div className="absolute top-2 left-2 bg-yellow-100 text-yellow-800 rounded-full px-2.5 py-1 text-[10px] font-bold">
- Offre actuelle
- </div>
- )}
+        await addDoc(collection(db, "exchanges"), {
+          senderId: user.uid,
+          receiverId: requestedItem.ownerId,
+          participants: [user.uid, requestedItem.ownerId],
 
- {selected && (
- <div className="absolute inset-0 bg-troco-green/5 pointer-events-none" />
- )}
- </button>
- );
- })}
- </div>
- )}
+          requestedItemId: requestedItem.id,
+          requestedItemTitle: requestedItem.title || "Objet demandé",
 
- <div className="bg-white rounded-[2rem] border border-gray-100 shadow-sm p-4">
- <label className="text-xs uppercase font-bold text-troco-muted">
- Message
- </label>
+          offeredItemIds: selectedIds,
 
- <textarea
- className="input resize-none mt-2"
- rows={3}
- placeholder="Ajoute un message..."
- value={message}
- onChange={(e) => setMessage(e.target.value)}
- />
- </div>
- </div>
+          status: "pending",
+          message: message.trim(),
 
- <div className="fixed bottom-[76px] left-0 right-0 z-30">
- <div className="max-w-lg mx-auto px-5">
- <div className="bg-white/95 backdrop-blur-xl border border-gray-100 shadow-soft rounded-[2rem] p-3">
- <div className="flex items-center justify-between gap-3 mb-3">
- <div>
- <p className="text-xs text-troco-muted">Sélection</p>
- <p className="font-bold text-troco-dark text-sm">
- {selectedIds.length}/2 objet{selectedIds.length > 1 ? "s" : ""}
- </p>
- </div>
+          counterStatus: null,
+          counterRequestedItemIds: [],
+          counterMessage: "",
 
- {selectedIds.length > 0 && (
- <button
- className="text-xs text-troco-muted font-semibold"
- onClick={() => setSelectedIds([])}
- >
- Effacer
- </button>
- )}
- </div>
+          createdAt: serverTimestamp(),
+          updatedAt: serverTimestamp(),
+        });
+      }
 
- <button
- className="btn-primary w-full"
- disabled={sending || selectedIds.length === 0}
- onClick={submit}
- >
- {sending
- ? "Envoi..."
- : isCounter
- ? "Envoyer la négociation"
- : "Envoyer la proposition"}
- </button>
- </div>
- </div>
- </div>
+      navigate("/exchanges", { replace: true });
+    } catch (e) {
+      console.error(e);
+      setError(e.message || "Erreur lors de l’envoi.");
+    } finally {
+      setSending(false);
+    }
+  };
 
- <BottomNav />
- </div>
- );
+  if (loading) {
+    return (
+      <div className="page max-w-lg mx-auto min-h-screen bg-[#f7f5f1] p-5">
+        Chargement...
+      </div>
+    );
+  }
+
+  return (
+    <div className="page max-w-lg mx-auto min-h-screen bg-[#f7f5f1] pb-24">
+      <div className="px-5 pt-5 pb-4">
+        <button onClick={() => navigate(-1)} className="text-sm text-slate-500 mb-4">
+          ← Retour
+        </button>
+
+        <h1 className="text-2xl font-extrabold text-slate-900">
+          {isCounter ? "Négocier" : "Proposer un échange"}
+        </h1>
+
+        <p className="text-sm text-slate-500 mt-1">
+          {isCounter
+            ? "Choisis jusqu’à 2 objets dans la bibliothèque de l’autre personne."
+            : "Choisis jusqu’à 2 objets de ta bibliothèque."}
+        </p>
+      </div>
+
+      <div className="px-5 space-y-4">
+        {error && (
+          <div className="bg-red-50 border border-red-200 text-red-600 text-sm rounded-xl px-4 py-3">
+            {error}
+          </div>
+        )}
+
+        {requestedItem && (
+          <div className="bg-white rounded-3xl shadow-sm p-4">
+            <p className="text-xs uppercase font-bold text-slate-400 mb-2">
+              Objet demandé
+            </p>
+
+            {requestedItem.imageUrl && (
+              <img
+                src={requestedItem.imageUrl}
+                alt={requestedItem.title}
+                className="w-full h-44 object-cover rounded-2xl mb-3"
+              />
+            )}
+
+            <p className="font-bold text-slate-900">{requestedItem.title}</p>
+          </div>
+        )}
+
+        {items.length === 0 ? (
+          <div className="bg-white rounded-3xl shadow-sm p-6 text-center">
+            <div className="text-4xl mb-3">📦</div>
+            <p className="font-semibold text-slate-900">
+              Aucun objet disponible
+            </p>
+            <p className="text-sm text-slate-500 mt-1">
+              Impossible de faire une proposition pour l’instant.
+            </p>
+          </div>
+        ) : (
+          <div className="grid grid-cols-2 gap-3">
+            {items.map((item) => {
+              const selected = selectedIds.includes(item.id);
+              const wasInitiallyOffered =
+                exchange?.offeredItemIds?.includes(item.id);
+
+              return (
+                <button
+                  key={item.id}
+                  type="button"
+                  onClick={() => toggleItem(item.id)}
+                  className={`relative overflow-hidden rounded-3xl bg-white shadow-sm border text-left ${
+                    selected
+                      ? "border-troco-green ring-2 ring-troco-green/30"
+                      : "border-gray-100"
+                  }`}
+                >
+                  <div className="h-36 bg-[#f4f1ec]">
+                    {item.imageUrl ? (
+                      <img
+                        src={item.imageUrl}
+                        alt={item.title}
+                        className="w-full h-full object-cover"
+                      />
+                    ) : (
+                      <div className="w-full h-full flex items-center justify-center text-gray-400 text-sm">
+                        Pas d’image
+                      </div>
+                    )}
+                  </div>
+
+                  <div className="p-3">
+                    <p className="font-bold text-sm text-slate-900 line-clamp-2">
+                      {item.title || "Sans titre"}
+                    </p>
+
+                    <p className="text-xs text-slate-400 mt-1">
+                      {item.category || "Sans catégorie"}
+                    </p>
+                  </div>
+
+                  {wasInitiallyOffered && (
+                    <div className="absolute top-2 left-2 bg-yellow-100 text-yellow-800 rounded-full px-2 py-1 text-[10px] font-bold">
+                      Offre initiale
+                    </div>
+                  )}
+
+                  {selected && (
+                    <div className="absolute top-2 right-2 w-7 h-7 rounded-full bg-troco-green text-white flex items-center justify-center text-sm font-bold">
+                      ✓
+                    </div>
+                  )}
+                </button>
+              );
+            })}
+          </div>
+        )}
+
+        <div className="bg-white rounded-3xl shadow-sm p-4">
+          <label className="text-xs uppercase font-bold text-slate-400">
+            Message
+          </label>
+
+          <textarea
+            className="input resize-none mt-2"
+            rows={3}
+            placeholder="Ajoute un message..."
+            value={message}
+            onChange={(e) => setMessage(e.target.value)}
+          />
+        </div>
+
+        <button
+          className="btn-primary w-full"
+          disabled={sending || selectedIds.length === 0}
+          onClick={submit}
+        >
+          {sending
+            ? "Envoi..."
+            : isCounter
+            ? "Envoyer la négociation"
+            : "Envoyer la proposition"}
+        </button>
+      </div>
+
+      <BottomNav />
+    </div>
+  );
 }

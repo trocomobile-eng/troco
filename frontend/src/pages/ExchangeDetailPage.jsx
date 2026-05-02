@@ -1,420 +1,439 @@
 import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import { api, imageUrl } from "../api";
+import { db } from "../firebase";
 import { useAuth } from "../context/AuthContext";
 import {
- TopBar,
- LoadingSpinner,
- StatusBadge,
- CategoryBadge,
- ItemPlaceholder,
-} from "../components/UI";
+  doc,
+  getDoc,
+  updateDoc,
+  collection,
+  getDocs,
+  query,
+  where,
+  serverTimestamp,
+} from "firebase/firestore";
 import BottomNav from "../components/BottomNav";
 
-function formatDate(date) {
- if (!date) return "";
+function ItemBlock({ title, items }) {
+  return (
+    <div className="bg-white rounded-3xl shadow-sm p-4">
+      <p className="text-xs uppercase font-bold text-slate-400 mb-3">
+        {title}
+      </p>
 
- return new Date(date.replace(" ", "T") + "Z").toLocaleString("fr-FR", {
- timeZone: "Europe/Paris",
- day: "2-digit",
- month: "2-digit",
- hour: "2-digit",
- minute: "2-digit",
- });
-}
+      {items.length === 0 ? (
+        <p className="text-sm text-slate-500">Aucun objet.</p>
+      ) : (
+        <div className="space-y-3">
+          {items.map((item) => (
+            <div key={item.id} className="flex gap-3">
+              <div className="w-20 h-20 rounded-2xl overflow-hidden bg-[#f4f1ec] flex-shrink-0">
+                {item.imageUrl ? (
+                  <img
+                    src={item.imageUrl}
+                    alt={item.title}
+                    className="w-full h-full object-cover"
+                  />
+                ) : (
+                  <div className="w-full h-full flex items-center justify-center text-xs text-slate-400">
+                    Pas d’image
+                  </div>
+                )}
+              </div>
 
-function parseSlots(value) {
- try {
- return JSON.parse(value || "[]");
- } catch {
- return [];
- }
-}
-
-function MiniItem({ item, label, faded = false }) {
- const navigate = useNavigate();
- const img = imageUrl(item?.image_url);
-
- return (
- <div
- onClick={() => item?.id && navigate(`/items/${item.id}`)}
- className={`flex gap-3 bg-white p-3 rounded-2xl border border-gray-100 shadow-sm cursor-pointer active:scale-[0.98] ${
- faded ? "opacity-60" : ""
- }`}
- >
- <div className="w-16 h-16 rounded-xl overflow-hidden bg-troco-sand flex-shrink-0">
- {img ? (
- <img
- src={img}
- alt={item?.title || "Objet"}
- className="w-full h-full object-cover"
- />
- ) : (
- <ItemPlaceholder className="w-full h-full" />
- )}
- </div>
-
- <div className="min-w-0">
- {label && (
- <p className="text-[10px] uppercase font-bold text-troco-muted mb-1">
- {label}
- </p>
- )}
-
- <p className="font-black text-sm text-troco-dark truncate">
- {item?.title || "Objet"}
- </p>
-
- {item?.category && (
- <div className="mt-1">
- <CategoryBadge category={item.category} />
- </div>
- )}
- </div>
- </div>
- );
+              <div className="flex-1 min-w-0">
+                <p className="font-semibold text-slate-900 truncate">
+                  {item.title || "Sans titre"}
+                </p>
+                <p className="text-xs text-slate-500 mt-1">
+                  {item.category || "Sans catégorie"}
+                </p>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
 }
 
 export default function ExchangeDetailPage() {
- const { id } = useParams();
- const navigate = useNavigate();
- const { user, token } = useAuth();
+  const { id } = useParams();
+  const navigate = useNavigate();
+  const { user, loading: authLoading } = useAuth();
 
- const [exchange, setExchange] = useState(null);
- const [loading, setLoading] = useState(true);
+  const [exchange, setExchange] = useState(null);
+  const [requestedItem, setRequestedItem] = useState(null);
+  const [offeredItems, setOfferedItems] = useState([]);
+  const [counterItems, setCounterItems] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
 
- const load = () => {
- if (!token) return;
+  const loadExchange = async () => {
+    setLoading(true);
 
- setLoading(true);
+    try {
+      const exchangeSnap = await getDoc(doc(db, "exchanges", id));
 
- api.getExchange(id, token).then((data) => {
- setExchange(data);
- setLoading(false);
- });
- };
+      if (!exchangeSnap.exists()) {
+        setExchange(null);
+        return;
+      }
 
- useEffect(() => {
- load();
- }, [id, token]);
+      const ex = {
+        id: exchangeSnap.id,
+        ...exchangeSnap.data(),
+      };
 
- if (loading) {
- return (
- <div className="page max-w-lg mx-auto">
- <TopBar back={() => navigate(-1)} title="Échange" />
- <LoadingSpinner />
- <BottomNav />
- </div>
- );
- }
+      setExchange(ex);
 
- if (!exchange || exchange.error) {
- return (
- <div className="page max-w-lg mx-auto">
- <TopBar back={() => navigate(-1)} title="Échange" />
- <div className="px-5 py-6 text-sm text-red-500">
- Échange introuvable.
- </div>
- <BottomNav />
- </div>
- );
- }
+      if (ex.requestedItemId) {
+        const requestedSnap = await getDoc(doc(db, "items", ex.requestedItemId));
 
- const isProposer = Number(exchange.proposer_id) === Number(user?.id);
- const isReceiver = Number(exchange.receiver_id) === Number(user?.id);
+        if (requestedSnap.exists()) {
+          setRequestedItem({
+            id: requestedSnap.id,
+            ...requestedSnap.data(),
+          });
+        }
+      }
 
- const hasCounter = exchange.counter_status === "pending";
- const hasDeclined = exchange.counter_status === "declined";
+      if (Array.isArray(ex.offeredItemIds) && ex.offeredItemIds.length > 0) {
+        const q = query(
+          collection(db, "items"),
+          where("__name__", "in", ex.offeredItemIds.slice(0, 10))
+        );
 
- const otherUser = isProposer
- ? exchange.receiver_name
- : exchange.proposer_name;
+        const snapshot = await getDocs(q);
 
- const requestedItem = {
- id: exchange.requested_item_id,
- title: exchange.requested_item_title,
- image_url: exchange.requested_item_image,
- category: exchange.requested_item_category,
- };
+        setOfferedItems(
+          snapshot.docs.map((doc) => ({
+            id: doc.id,
+            ...doc.data(),
+          }))
+        );
+      } else {
+        setOfferedItems([]);
+      }
 
- const offeredItems = exchange.offeredItems || [];
- const counterItems = exchange.counterItems || [];
- const availabilitySlots = parseSlots(exchange.availability_proposals);
+      if (
+        Array.isArray(ex.counterRequestedItemIds) &&
+        ex.counterRequestedItemIds.length > 0
+      ) {
+        const q = query(
+          collection(db, "items"),
+          where("__name__", "in", ex.counterRequestedItemIds.slice(0, 10))
+        );
 
- const accept = async () => {
- await api.updateExchangeStatus(id, "accepted", token);
- load();
- };
+        const snapshot = await getDocs(q);
 
- const decline = async () => {
- await api.updateExchangeStatus(id, "declined", token);
- navigate("/exchanges", { replace: true });
- };
+        setCounterItems(
+          snapshot.docs.map((doc) => ({
+            id: doc.id,
+            ...doc.data(),
+          }))
+        );
+      } else {
+        setCounterItems([]);
+      }
+    } catch (error) {
+      console.error("Erreur détail échange :", error);
+    } finally {
+      setLoading(false);
+    }
+  };
 
- const cancel = async () => {
- await api.updateExchangeStatus(id, "cancelled", token);
- navigate("/exchanges", { replace: true });
- };
+  useEffect(() => {
+    if (authLoading) return;
 
- const acceptCounter = async () => {
- await api.respondCounterProposal(id, "accepted", token);
- load();
- };
+    if (!user) {
+      navigate("/login");
+      return;
+    }
 
- const declineCounter = async () => {
- await api.respondCounterProposal(id, "declined", token);
- navigate("/exchanges", { replace: true });
- };
+    loadExchange();
+  }, [id, user, authLoading, navigate]);
 
- const acceptSlot = async (slot) => {
- const res = await api.respondAvailability(
- exchange.id,
- {
- response: "accepted",
- selectedSlot: slot,
- },
- token
- );
+  const updateStatus = async (status) => {
+    if (!exchange) return;
 
- if (res?.error) return alert(res.error);
- load();
- };
+    setSaving(true);
 
- return (
- <div className="page max-w-lg mx-auto">
- <TopBar
- back={() => navigate(-1)}
- title="Échange"
- action={<StatusBadge status={exchange.status} />}
- />
+    try {
+      await updateDoc(doc(db, "exchanges", exchange.id), {
+        status,
+        updatedAt: serverTimestamp(),
+      });
 
- <div className="px-5 py-5 pb-28 space-y-5">
- <div className="bg-white rounded-[2rem] p-5 border border-gray-100 shadow-sm">
- <p className="text-xs text-troco-muted">
- {isProposer ? "Échange avec" : "Demande reçue de"}
- </p>
+      setExchange((current) => ({
+        ...current,
+        status,
+      }));
+    } catch (error) {
+      console.error("Erreur mise à jour échange :", error);
+    } finally {
+      setSaving(false);
+    }
+  };
 
- <h2 className="font-black text-xl text-troco-dark mt-1">
- {otherUser || "Utilisateur"}
- </h2>
+  const acceptCounter = async () => {
+    if (!exchange) return;
 
- <p className="text-xs text-troco-muted mt-1">
- {formatDate(exchange.updated_at || exchange.created_at)}
- </p>
- </div>
+    setSaving(true);
 
- {hasCounter && (
- <div className="bg-troco-green/5 border border-troco-green/40 rounded-[2rem] p-5 space-y-4 shadow-sm">
- <div>
- <p className="text-xs uppercase font-black text-troco-green mb-1">
- Négociation
- </p>
+    try {
+      await updateDoc(doc(db, "exchanges", exchange.id), {
+        status: "accepted",
+        counterStatus: "accepted",
+        offeredItemIds: exchange.counterRequestedItemIds || [],
+        updatedAt: serverTimestamp(),
+      });
 
- <h3 className="text-lg font-black text-troco-dark leading-snug">
- {isProposer
- ? `${otherUser} souhaite négocier`
- : "Ta demande de négociation est envoyée"}
- </h3>
+      await loadExchange();
+    } catch (error) {
+      console.error("Erreur acceptation négociation :", error);
+    } finally {
+      setSaving(false);
+    }
+  };
 
- <p className="text-sm text-troco-muted mt-2 leading-relaxed">
- {isProposer
- ? `${otherUser} souhaite recevoir les objets ci-dessous. Tu peux accepter cette nouvelle demande ou la refuser.`
- : `En attente de réponse de ${otherUser}.`}
- </p>
- </div>
+  const declineCounter = async () => {
+    if (!exchange) return;
 
- <div className="bg-white/70 rounded-3xl p-3 space-y-3">
- <p className="text-[11px] uppercase font-black text-troco-muted">
- Nouvelle demande
- </p>
+    setSaving(true);
 
- {counterItems.map((item) => (
- <MiniItem key={item.id} item={item} />
- ))}
- </div>
+    try {
+      await updateDoc(doc(db, "exchanges", exchange.id), {
+        counterStatus: "declined",
+        updatedAt: serverTimestamp(),
+      });
 
- {offeredItems.length > 0 && (
- <div className="bg-white/50 rounded-3xl p-3 space-y-3">
- <p className="text-[11px] uppercase font-black text-troco-muted">
- Offre initiale
- </p>
+      await loadExchange();
+    } catch (error) {
+      console.error("Erreur refus négociation :", error);
+    } finally {
+      setSaving(false);
+    }
+  };
 
- {offeredItems.map((item) => (
- <MiniItem key={item.id} item={item} faded />
- ))}
- </div>
- )}
+  if (loading) {
+    return (
+      <div className="page max-w-lg mx-auto min-h-screen bg-[#f7f5f1] p-5">
+        Chargement...
+      </div>
+    );
+  }
 
- {exchange.counter_message && (
- <p className="text-sm bg-white p-3 rounded-2xl text-troco-dark">
- “{exchange.counter_message}”
- </p>
- )}
+  if (!exchange) {
+    return (
+      <div className="page max-w-lg mx-auto min-h-screen bg-[#f7f5f1] p-5">
+        <p>Échange introuvable.</p>
+        <button className="btn-primary mt-4" onClick={() => navigate("/exchanges")}>
+          Retour
+        </button>
+      </div>
+    );
+  }
 
- {isProposer ? (
- <div className="space-y-2">
- <button onClick={acceptCounter} className="btn-primary w-full">
- Accepter la nouvelle demande
- </button>
+  const isSender = exchange.senderId === user?.uid;
+  const isReceiver = exchange.receiverId === user?.uid;
+  const isPending = exchange.status === "pending";
+  const hasCounterPending = exchange.counterStatus === "pending";
+  const hasCounterDeclined = exchange.counterStatus === "declined";
 
- <button
- onClick={declineCounter}
- className="btn-secondary w-full"
- >
- Refuser
- </button>
- </div>
- ) : (
- <div className="bg-yellow-50 text-yellow-800 rounded-2xl p-3 text-sm font-semibold">
- En attente de réponse
- </div>
- )}
- </div>
- )}
+  return (
+    <div className="page max-w-lg mx-auto min-h-screen bg-[#f7f5f1] pb-24">
+      <div className="px-5 pt-5 pb-4">
+        <button
+          onClick={() => navigate(-1)}
+          className="text-sm text-slate-500 mb-4"
+        >
+          ← Retour
+        </button>
 
- {hasDeclined && !isProposer && (
- <div className="bg-yellow-50 border border-yellow-200 rounded-[2rem] p-5 space-y-3">
- <p className="font-black text-yellow-800">
- Négociation refusée
- </p>
+        <h1 className="text-2xl font-extrabold text-slate-900">
+          Détail de l’échange
+        </h1>
 
- <p className="text-sm text-troco-muted">
- {otherUser} a refusé ta demande. Tu peux accepter l’offre
- initiale ou refuser l’échange.
- </p>
+        <p className="text-sm text-slate-500 mt-1">
+          Statut : {exchange.status}
+        </p>
+      </div>
 
- <div className="space-y-2">
- <button onClick={accept} className="btn-primary w-full">
- Accepter l’offre initiale
- </button>
+      <div className="px-5 space-y-4">
+        <ItemBlock
+          title="Objet demandé"
+          items={requestedItem ? [requestedItem] : []}
+        />
 
- <button onClick={decline} className="btn-secondary w-full">
- Refuser l’échange
- </button>
- </div>
- </div>
- )}
+        <ItemBlock
+          title="Offre initiale"
+          items={offeredItems}
+        />
 
- <div className="space-y-3">
- <p className="text-xs uppercase font-black text-troco-muted">
- Objet demandé
- </p>
+        {exchange.message && (
+          <div className="bg-white rounded-3xl shadow-sm p-4">
+            <p className="text-xs uppercase font-bold text-slate-400 mb-2">
+              Message
+            </p>
+            <p className="text-sm text-slate-700">“{exchange.message}”</p>
+          </div>
+        )}
 
- <MiniItem item={requestedItem} />
- </div>
+        {hasCounterPending && (
+          <div className="bg-troco-green/5 border border-troco-green/30 rounded-3xl p-4 space-y-4">
+            <div>
+              <p className="text-xs uppercase font-bold text-troco-green mb-2">
+                Négociation en cours
+              </p>
 
- <div className="space-y-3">
- <p className="text-xs uppercase font-black text-troco-muted">
- Objets proposés
- </p>
+              <p className="text-sm text-slate-600">
+                {isSender
+                  ? "L’autre personne préfère recevoir ces objets à la place."
+                  : "Ta demande de négociation est en attente de réponse."}
+              </p>
+            </div>
 
- {offeredItems.map((item) => (
- <MiniItem key={item.id} item={item} />
- ))}
- </div>
+            <ItemBlock
+              title="Nouvelle demande"
+              items={counterItems}
+            />
 
- {exchange.status === "accepted" && (
- <div className="bg-white rounded-[2rem] border border-gray-100 shadow-sm p-5 space-y-4">
- <div>
- <p className="text-xs uppercase font-black text-troco-green mb-1">
- Rendez-vous
- </p>
+            {exchange.counterMessage && (
+              <div className="bg-white rounded-2xl p-3">
+                <p className="text-sm text-slate-700">
+                  “{exchange.counterMessage}”
+                </p>
+              </div>
+            )}
 
- <h3 className="text-lg font-black text-slate-900">
- Organiser l’échange
- </h3>
+            {isSender && (
+              <div className="space-y-2">
+                <button
+                  className="btn-primary w-full"
+                  disabled={saving}
+                  onClick={acceptCounter}
+                >
+                  Accepter la négociation
+                </button>
 
- <p className="text-sm text-slate-500 mt-1">
- L’échange est accepté. Il reste à choisir un créneau.
- </p>
- </div>
+                <button
+                  className="btn-secondary w-full"
+                  disabled={saving}
+                  onClick={declineCounter}
+                >
+                  Refuser la négociation
+                </button>
+              </div>
+            )}
 
- {!exchange.availability_status && (
- <button
- className="btn-primary w-full"
- onClick={() => navigate(`/availability/${exchange.id}`)}
- >
- Proposer des disponibilités
- </button>
- )}
+            {isReceiver && (
+              <div className="bg-yellow-50 text-yellow-800 rounded-2xl p-3 text-sm font-semibold">
+                En attente de réponse de l’autre utilisateur.
+              </div>
+            )}
+          </div>
+        )}
 
- {exchange.availability_status === "pending" && (
- <div className="space-y-3">
- <p className="text-sm font-bold text-slate-800">
- Créneaux proposés :
- </p>
+        {hasCounterDeclined && isReceiver && isPending && (
+          <div className="bg-yellow-50 border border-yellow-200 rounded-3xl p-4 space-y-3">
+            <p className="font-bold text-yellow-800">
+              Négociation refusée
+            </p>
 
- {availabilitySlots.map((slot) => (
- <button
- key={slot}
- type="button"
- onClick={() => acceptSlot(slot)}
- className="w-full text-left bg-troco-sand/50 border border-gray-100 rounded-2xl px-4 py-3 text-sm font-bold text-slate-800 active:scale-[0.98]"
- >
- {slot}
- </button>
- ))}
+            <p className="text-sm text-yellow-800">
+              L’autre personne n’a pas accepté ta négociation. Tu peux quand même
+              accepter l’échange initial, ou annuler/refuser l’échange.
+            </p>
 
- <button
- className="btn-secondary w-full"
- onClick={() => navigate(`/availability/${exchange.id}`)}
- >
- Proposer d’autres créneaux
- </button>
- </div>
- )}
+            <button
+              className="btn-primary w-full"
+              disabled={saving}
+              onClick={() => updateStatus("accepted")}
+            >
+              Accepter l’offre initiale
+            </button>
 
- {exchange.availability_status === "confirmed" && (
- <div className="bg-green-50 border border-green-200 rounded-2xl p-4">
- <p className="font-black text-green-800">
- Rendez-vous confirmé
- </p>
+            <button
+              className="w-full rounded-xl py-3 font-semibold bg-red-50 text-red-600"
+              disabled={saving}
+              onClick={() => updateStatus("declined")}
+            >
+              Annuler / refuser l’échange
+            </button>
+          </div>
+        )}
 
- <p className="text-sm text-green-700 mt-1">
- {exchange.confirmed_slot}
- </p>
- </div>
- )}
- </div>
- )}
+        {!hasCounterPending && !hasCounterDeclined && isReceiver && isPending && (
+          <div className="bg-white rounded-3xl shadow-sm p-4 space-y-3">
+            <button
+              className="btn-primary w-full"
+              disabled={saving}
+              onClick={() => updateStatus("accepted")}
+            >
+              Accepter l’échange
+            </button>
 
- {!hasCounter &&
- !hasDeclined &&
- exchange.status === "pending" && (
- <div className="space-y-2">
- {isReceiver && (
- <>
- <button onClick={accept} className="btn-primary w-full">
- Accepter
- </button>
+            <button
+              className="btn-secondary w-full"
+              disabled={saving}
+              onClick={() =>
+                navigate(`/propose/${exchange.requestedItemId}?mode=counter&from=${exchange.id}`)
+              }
+            >
+              Négocier
+            </button>
 
- <button
- onClick={() =>
- navigate(
- `/propose/${exchange.requested_item_id}?mode=counter&from=${exchange.id}`
- )
- }
- className="btn-secondary w-full"
- >
- Négocier
- </button>
+            <button
+              className="w-full rounded-xl py-3 font-semibold bg-red-50 text-red-600"
+              disabled={saving}
+              onClick={() => updateStatus("declined")}
+            >
+              Refuser
+            </button>
+          </div>
+        )}
 
- <button onClick={decline} className="btn-secondary w-full">
- Refuser
- </button>
- </>
- )}
+        {!hasCounterPending && isSender && isPending && (
+          <div className="bg-white rounded-3xl shadow-sm p-4 space-y-3">
+            <p className="text-sm text-slate-500">
+              En attente de réponse de l’autre utilisateur.
+            </p>
 
- {isProposer && (
- <button onClick={cancel} className="btn-secondary w-full">
- Annuler
- </button>
- )}
- </div>
- )}
- </div>
+            <button
+              className="btn-secondary w-full"
+              disabled={saving}
+              onClick={() => updateStatus("cancelled")}
+            >
+              Annuler la proposition
+            </button>
+          </div>
+        )}
 
- <BottomNav />
- </div>
- );
+        {exchange.status === "accepted" && (
+          <div className="bg-green-50 border border-green-200 rounded-3xl p-4">
+            <p className="font-bold text-green-800">
+              Échange accepté
+            </p>
+            <p className="text-sm text-green-700 mt-1">
+              Vous pouvez maintenant organiser le rendez-vous.
+            </p>
+          </div>
+        )}
+
+        {(exchange.status === "declined" || exchange.status === "cancelled") && (
+          <div className="bg-red-50 border border-red-200 rounded-3xl p-4">
+            <p className="font-bold text-red-700">
+              Échange terminé
+            </p>
+            <p className="text-sm text-red-600 mt-1">
+              Cette proposition n’est plus active.
+            </p>
+          </div>
+        )}
+      </div>
+
+      <BottomNav />
+    </div>
+  );
 }
