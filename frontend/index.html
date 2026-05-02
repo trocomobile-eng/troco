@@ -7,21 +7,296 @@
   <meta name="Generator" content="Cocoa HTML Writer">
   <meta name="CocoaVersion" content="1894.7">
   <style type="text/css">
-    p.p1 {margin: 0.0px 0.0px 0.0px 0.0px; font: 12.0px Times; color: #000000; -webkit-text-stroke: #000000}
-    span.s1 {font-kerning: none}
+    p.p1 {margin: 0.0px 0.0px 0.0px 0.0px; font: 12.0px 'Helvetica Neue'}
+    p.p2 {margin: 0.0px 0.0px 0.0px 0.0px; font: 12.0px 'Helvetica Neue'; min-height: 14.0px}
   </style>
 </head>
 <body>
-<p class="p1"><span class="s1">&lt;!doctype html&gt;</span></p>
-<p class="p1"><span class="s1">&lt;html&gt;</span></p>
-<p class="p1"><span class="s1"><span class="Apple-converted-space">  </span>&lt;head&gt;</span></p>
-<p class="p1"><span class="s1"><span class="Apple-converted-space">    </span>&lt;meta charset="UTF-8" /&gt;</span></p>
-<p class="p1"><span class="s1"><span class="Apple-converted-space">    </span>&lt;title&gt;Troco&lt;/title&gt;</span></p>
-<p class="p1"><span class="s1"><span class="Apple-converted-space">  </span>&lt;/head&gt;</span></p>
-<p class="p1"><span class="s1"><span class="Apple-converted-space">  </span>&lt;body&gt;</span></p>
-<p class="p1"><span class="s1"><span class="Apple-converted-space">    </span>&lt;div id="root"&gt;&lt;/div&gt;</span></p>
-<p class="p1"><span class="s1"><span class="Apple-converted-space">    </span>&lt;script type="module" src="/src/main.jsx"&gt;&lt;/script&gt;</span></p>
-<p class="p1"><span class="s1"><span class="Apple-converted-space">  </span>&lt;/body&gt;</span></p>
-<p class="p1"><span class="s1">&lt;/html&gt;</span></p>
+<p class="p1">&lt;!DOCTYPE html&gt;</p>
+<p class="p1">&lt;html lang="fr"&gt;</p>
+<p class="p1"><span class="Apple-converted-space">  </span>&lt;head&gt;</p>
+<p class="p1"><span class="Apple-converted-space">    </span>&lt;meta charset="UTF-8" /&gt;</p>
+<p class="p1"><span class="Apple-converted-space">    </span>&lt;meta name="viewport" content="width=device-width, initial-scale=1.0" /&gt;</p>
+<p class="p1"><span class="Apple-converted-space">    </span>&lt;title&gt;Troco&lt;/title&gt;</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">    </span>&lt;style&gt;</p>
+<p class="p1"><span class="Apple-converted-space">      </span>* {</p>
+<p class="p1"><span class="Apple-converted-space">        </span>box-sizing: border-box;</p>
+<p class="p1"><span class="Apple-converted-space">      </span>}</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">      </span>body {</p>
+<p class="p1"><span class="Apple-converted-space">        </span>margin: 0;</p>
+<p class="p1"><span class="Apple-converted-space">        </span>font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;</p>
+<p class="p1"><span class="Apple-converted-space">        </span>color: #25342f;</p>
+<p class="p1"><span class="Apple-converted-space">        </span>background:</p>
+<p class="p1"><span class="Apple-converted-space">          </span>radial-gradient(circle at top, rgba(145, 205, 255, 0.5), transparent 45%),</p>
+<p class="p1"><span class="Apple-converted-space">          </span>linear-gradient(180deg, #dff2ff 0%, #f1f9ff 100%);</p>
+<p class="p1"><span class="Apple-converted-space">      </span>}</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">      </span>.hero {</p>
+<p class="p1"><span class="Apple-converted-space">        </span>min-height: 55vh;</p>
+<p class="p1"><span class="Apple-converted-space">        </span>display: flex;</p>
+<p class="p1"><span class="Apple-converted-space">        </span>align-items: center;</p>
+<p class="p1"><span class="Apple-converted-space">        </span>justify-content: center;</p>
+<p class="p1"><span class="Apple-converted-space">        </span>text-align: center;</p>
+<p class="p1"><span class="Apple-converted-space">        </span>padding: 24px 24px 0px;</p>
+<p class="p1"><span class="Apple-converted-space">      </span>}</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">      </span>.logo {</p>
+<p class="p1"><span class="Apple-converted-space">        </span>width: 680px;</p>
+<p class="p1"><span class="Apple-converted-space">        </span>max-width: 96vw;</p>
+<p class="p1"><span class="Apple-converted-space">        </span>display: block;</p>
+<p class="p1"><span class="Apple-converted-space">        </span>margin: 0 auto -40px;</p>
+<p class="p1"><span class="Apple-converted-space">        </span>filter: drop-shadow(0 20px 40px rgba(0, 0, 0, 0.08));</p>
+<p class="p1"><span class="Apple-converted-space">        </span>opacity: 0;</p>
+<p class="p1"><span class="Apple-converted-space">        </span>animation: fadeLogo 1.8s ease-out forwards;</p>
+<p class="p1"><span class="Apple-converted-space">        </span>animation-delay: 0.2s;</p>
+<p class="p1"><span class="Apple-converted-space">      </span>}</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">      </span>.tagline {</p>
+<p class="p1"><span class="Apple-converted-space">        </span>margin: 0;</p>
+<p class="p1"><span class="Apple-converted-space">        </span>font-size: 16px;</p>
+<p class="p1"><span class="Apple-converted-space">        </span>color: #5f7480;</p>
+<p class="p1"><span class="Apple-converted-space">        </span>letter-spacing: 0.3px;</p>
+<p class="p1"><span class="Apple-converted-space">        </span>opacity: 0;</p>
+<p class="p1"><span class="Apple-converted-space">        </span>animation: fadeText 1.4s ease-out forwards;</p>
+<p class="p1"><span class="Apple-converted-space">        </span>animation-delay: 0.9s;</p>
+<p class="p1"><span class="Apple-converted-space">      </span>}</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">      </span>.presentation {</p>
+<p class="p1"><span class="Apple-converted-space">        </span>max-width: 980px;</p>
+<p class="p1"><span class="Apple-converted-space">        </span>margin: 0 auto;</p>
+<p class="p1"><span class="Apple-converted-space">        </span>padding: 10px 22px 40px;</p>
+<p class="p1"><span class="Apple-converted-space">      </span>}</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">      </span>.intro {</p>
+<p class="p1"><span class="Apple-converted-space">        </span>text-align: center;</p>
+<p class="p1"><span class="Apple-converted-space">        </span>margin-bottom: 42px;</p>
+<p class="p1"><span class="Apple-converted-space">      </span>}</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">      </span>.intro h2 {</p>
+<p class="p1"><span class="Apple-converted-space">        </span>font-size: clamp(32px, 5vw, 56px);</p>
+<p class="p1"><span class="Apple-converted-space">        </span>letter-spacing: -1.8px;</p>
+<p class="p1"><span class="Apple-converted-space">        </span>line-height: 1;</p>
+<p class="p1"><span class="Apple-converted-space">        </span>margin: 0 0 18px;</p>
+<p class="p1"><span class="Apple-converted-space">      </span>}</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">      </span>.intro p {</p>
+<p class="p1"><span class="Apple-converted-space">        </span>max-width: 650px;</p>
+<p class="p1"><span class="Apple-converted-space">        </span>margin: 0 auto;</p>
+<p class="p1"><span class="Apple-converted-space">        </span>font-size: 18px;</p>
+<p class="p1"><span class="Apple-converted-space">        </span>line-height: 1.6;</p>
+<p class="p1"><span class="Apple-converted-space">        </span>color: #5f7480;</p>
+<p class="p1"><span class="Apple-converted-space">      </span>}</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">      </span>.cards {</p>
+<p class="p1"><span class="Apple-converted-space">        </span>display: grid;</p>
+<p class="p1"><span class="Apple-converted-space">        </span>grid-template-columns: repeat(3, 1fr);</p>
+<p class="p1"><span class="Apple-converted-space">        </span>gap: 18px;</p>
+<p class="p1"><span class="Apple-converted-space">        </span>margin-top: 34px;</p>
+<p class="p1"><span class="Apple-converted-space">      </span>}</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">      </span>.card {</p>
+<p class="p1"><span class="Apple-converted-space">        </span>background: rgba(255, 255, 255, 0.55);</p>
+<p class="p1"><span class="Apple-converted-space">        </span>border: 1px solid rgba(37, 52, 47, 0.08);</p>
+<p class="p1"><span class="Apple-converted-space">        </span>border-radius: 28px;</p>
+<p class="p1"><span class="Apple-converted-space">        </span>padding: 28px;</p>
+<p class="p1"><span class="Apple-converted-space">        </span>backdrop-filter: blur(18px);</p>
+<p class="p1"><span class="Apple-converted-space">        </span>box-shadow: 0 20px 60px rgba(37, 52, 47, 0.08);</p>
+<p class="p1"><span class="Apple-converted-space">      </span>}</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">      </span>.number {</p>
+<p class="p1"><span class="Apple-converted-space">        </span>width: 38px;</p>
+<p class="p1"><span class="Apple-converted-space">        </span>height: 38px;</p>
+<p class="p1"><span class="Apple-converted-space">        </span>border-radius: 999px;</p>
+<p class="p1"><span class="Apple-converted-space">        </span>background: #25342f;</p>
+<p class="p1"><span class="Apple-converted-space">        </span>color: white;</p>
+<p class="p1"><span class="Apple-converted-space">        </span>display: flex;</p>
+<p class="p1"><span class="Apple-converted-space">        </span>align-items: center;</p>
+<p class="p1"><span class="Apple-converted-space">        </span>justify-content: center;</p>
+<p class="p1"><span class="Apple-converted-space">        </span>font-weight: 700;</p>
+<p class="p1"><span class="Apple-converted-space">        </span>margin-bottom: 18px;</p>
+<p class="p1"><span class="Apple-converted-space">      </span>}</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">      </span>.card h3 {</p>
+<p class="p1"><span class="Apple-converted-space">        </span>margin: 0 0 10px;</p>
+<p class="p1"><span class="Apple-converted-space">        </span>font-size: 21px;</p>
+<p class="p1"><span class="Apple-converted-space">        </span>letter-spacing: -0.3px;</p>
+<p class="p1"><span class="Apple-converted-space">      </span>}</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">      </span>.card p {</p>
+<p class="p1"><span class="Apple-converted-space">        </span>margin: 0;</p>
+<p class="p1"><span class="Apple-converted-space">        </span>color: #5f7480;</p>
+<p class="p1"><span class="Apple-converted-space">        </span>line-height: 1.55;</p>
+<p class="p1"><span class="Apple-converted-space">        </span>font-size: 15.5px;</p>
+<p class="p1"><span class="Apple-converted-space">      </span>}</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">      </span>.faq {</p>
+<p class="p1"><span class="Apple-converted-space">        </span>margin-top: 24px;</p>
+<p class="p1"><span class="Apple-converted-space">        </span>background: rgba(255, 255, 255, 0.48);</p>
+<p class="p1"><span class="Apple-converted-space">        </span>border: 1px solid rgba(37, 52, 47, 0.08);</p>
+<p class="p1"><span class="Apple-converted-space">        </span>border-radius: 34px;</p>
+<p class="p1"><span class="Apple-converted-space">        </span>padding: 32px;</p>
+<p class="p1"><span class="Apple-converted-space">        </span>box-shadow: 0 20px 60px rgba(37, 52, 47, 0.07);</p>
+<p class="p1"><span class="Apple-converted-space">      </span>}</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">      </span>.faq h3 {</p>
+<p class="p1"><span class="Apple-converted-space">        </span>margin: 0 0 22px;</p>
+<p class="p1"><span class="Apple-converted-space">        </span>font-size: 28px;</p>
+<p class="p1"><span class="Apple-converted-space">        </span>letter-spacing: -0.8px;</p>
+<p class="p1"><span class="Apple-converted-space">      </span>}</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">      </span>details {</p>
+<p class="p1"><span class="Apple-converted-space">        </span>border-top: 1px solid rgba(37, 52, 47, 0.12);</p>
+<p class="p1"><span class="Apple-converted-space">        </span>padding: 18px 0;</p>
+<p class="p1"><span class="Apple-converted-space">      </span>}</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">      </span>details:last-child {</p>
+<p class="p1"><span class="Apple-converted-space">        </span>padding-bottom: 0;</p>
+<p class="p1"><span class="Apple-converted-space">      </span>}</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">      </span>summary {</p>
+<p class="p1"><span class="Apple-converted-space">        </span>cursor: pointer;</p>
+<p class="p1"><span class="Apple-converted-space">        </span>list-style: none;</p>
+<p class="p1"><span class="Apple-converted-space">        </span>font-size: 17px;</p>
+<p class="p1"><span class="Apple-converted-space">        </span>font-weight: 600;</p>
+<p class="p1"><span class="Apple-converted-space">      </span>}</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">      </span>summary::-webkit-details-marker {</p>
+<p class="p1"><span class="Apple-converted-space">        </span>display: none;</p>
+<p class="p1"><span class="Apple-converted-space">      </span>}</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">      </span>summary::after {</p>
+<p class="p1"><span class="Apple-converted-space">        </span>content: "+";</p>
+<p class="p1"><span class="Apple-converted-space">        </span>float: right;</p>
+<p class="p1"><span class="Apple-converted-space">        </span>font-size: 22px;</p>
+<p class="p1"><span class="Apple-converted-space">        </span>color: #5f7480;</p>
+<p class="p1"><span class="Apple-converted-space">      </span>}</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">      </span>details[open] summary::after {</p>
+<p class="p1"><span class="Apple-converted-space">        </span>content: "–";</p>
+<p class="p1"><span class="Apple-converted-space">      </span>}</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">      </span>details p {</p>
+<p class="p1"><span class="Apple-converted-space">        </span>margin: 12px 0 0;</p>
+<p class="p1"><span class="Apple-converted-space">        </span>color: #5f7480;</p>
+<p class="p1"><span class="Apple-converted-space">        </span>line-height: 1.55;</p>
+<p class="p1"><span class="Apple-converted-space">      </span>}</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">      </span>@keyframes fadeLogo {</p>
+<p class="p1"><span class="Apple-converted-space">        </span>from {</p>
+<p class="p1"><span class="Apple-converted-space">          </span>opacity: 0;</p>
+<p class="p1"><span class="Apple-converted-space">          </span>transform: translateY(30px) scale(0.96);</p>
+<p class="p1"><span class="Apple-converted-space">        </span>}</p>
+<p class="p1"><span class="Apple-converted-space">        </span>to {</p>
+<p class="p1"><span class="Apple-converted-space">          </span>opacity: 1;</p>
+<p class="p1"><span class="Apple-converted-space">          </span>transform: translateY(0) scale(1);</p>
+<p class="p1"><span class="Apple-converted-space">        </span>}</p>
+<p class="p1"><span class="Apple-converted-space">      </span>}</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">      </span>@keyframes fadeText {</p>
+<p class="p1"><span class="Apple-converted-space">        </span>from {</p>
+<p class="p1"><span class="Apple-converted-space">          </span>opacity: 0;</p>
+<p class="p1"><span class="Apple-converted-space">          </span>transform: translateY(8px);</p>
+<p class="p1"><span class="Apple-converted-space">        </span>}</p>
+<p class="p1"><span class="Apple-converted-space">        </span>to {</p>
+<p class="p1"><span class="Apple-converted-space">          </span>opacity: 1;</p>
+<p class="p1"><span class="Apple-converted-space">          </span>transform: translateY(0);</p>
+<p class="p1"><span class="Apple-converted-space">        </span>}</p>
+<p class="p1"><span class="Apple-converted-space">      </span>}</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">      </span>@media (max-width: 760px) {</p>
+<p class="p1"><span class="Apple-converted-space">        </span>.logo {</p>
+<p class="p1"><span class="Apple-converted-space">          </span>width: 460px;</p>
+<p class="p1"><span class="Apple-converted-space">          </span>max-width: 112vw;</p>
+<p class="p1"><span class="Apple-converted-space">          </span>margin-bottom: -22px;</p>
+<p class="p1"><span class="Apple-converted-space">        </span>}</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">        </span>.tagline {</p>
+<p class="p1"><span class="Apple-converted-space">          </span>font-size: 15px;</p>
+<p class="p1"><span class="Apple-converted-space">        </span>}</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">        </span>.hero {</p>
+<p class="p1"><span class="Apple-converted-space">          </span>min-height: 86vh;</p>
+<p class="p1"><span class="Apple-converted-space">        </span>}</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">        </span>.cards {</p>
+<p class="p1"><span class="Apple-converted-space">          </span>grid-template-columns: 1fr;</p>
+<p class="p1"><span class="Apple-converted-space">        </span>}</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">        </span>.presentation {</p>
+<p class="p1"><span class="Apple-converted-space">          </span>padding-top: 20px;</p>
+<p class="p1"><span class="Apple-converted-space">        </span>}</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">        </span>.faq {</p>
+<p class="p1"><span class="Apple-converted-space">          </span>padding: 26px;</p>
+<p class="p1"><span class="Apple-converted-space">        </span>}</p>
+<p class="p1"><span class="Apple-converted-space">      </span>}</p>
+<p class="p1"><span class="Apple-converted-space">    </span>&lt;/style&gt;</p>
+<p class="p1"><span class="Apple-converted-space">  </span>&lt;/head&gt;</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">  </span>&lt;body&gt;</p>
+<p class="p1"><span class="Apple-converted-space">    </span>&lt;section class="hero"&gt;</p>
+<p class="p1"><span class="Apple-converted-space">      </span>&lt;div&gt;</p>
+<p class="p1"><span class="Apple-converted-space">        </span>&lt;img src="/logo.png" alt="Troco" class="logo" /&gt;</p>
+<p class="p1"><span class="Apple-converted-space">      </span>&lt;/div&gt;</p>
+<p class="p1"><span class="Apple-converted-space">    </span>&lt;/section&gt;</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">    </span>&lt;section class="presentation"&gt;</p>
+<p class="p1"><span class="Apple-converted-space">      </span>&lt;div class="intro"&gt;</p>
+<p class="p1"><span class="Apple-converted-space">        </span>&lt;p&gt;</p>
+<p class="p1"><span class="Apple-converted-space">          </span>Troco est une application d’échange non monétaire pensée pour faire circuler les objets,</p>
+<p class="p1"><span class="Apple-converted-space">          </span>créer du lien et réduire le gaspillage.</p>
+<p class="p1"><span class="Apple-converted-space">        </span>&lt;/p&gt;</p>
+<p class="p1"><span class="Apple-converted-space">      </span>&lt;/div&gt;</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">      </span>&lt;div class="cards"&gt;</p>
+<p class="p1"><span class="Apple-converted-space">        </span>&lt;div class="card"&gt;</p>
+<p class="p1"><span class="Apple-converted-space">          </span>&lt;div class="number"&gt;1&lt;/div&gt;</p>
+<p class="p1"><span class="Apple-converted-space">          </span>&lt;h3&gt;Ajoutez un objet&lt;/h3&gt;</p>
+<p class="p1"><span class="Apple-converted-space">          </span>&lt;p&gt;Publiez ce que vous n’utilisez plus avec une photo simple et une courte description.&lt;/p&gt;</p>
+<p class="p1"><span class="Apple-converted-space">        </span>&lt;/div&gt;</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">        </span>&lt;div class="card"&gt;</p>
+<p class="p1"><span class="Apple-converted-space">          </span>&lt;div class="number"&gt;2&lt;/div&gt;</p>
+<p class="p1"><span class="Apple-converted-space">          </span>&lt;h3&gt;Découvrez&lt;/h3&gt;</p>
+<p class="p1"><span class="Apple-converted-space">          </span>&lt;p&gt;Parcourez les objets disponibles autour de vous et repérez ceux qui vous intéressent.&lt;/p&gt;</p>
+<p class="p1"><span class="Apple-converted-space">        </span>&lt;/div&gt;</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">        </span>&lt;div class="card"&gt;</p>
+<p class="p1"><span class="Apple-converted-space">          </span>&lt;div class="number"&gt;3&lt;/div&gt;</p>
+<p class="p1"><span class="Apple-converted-space">          </span>&lt;h3&gt;Échangez&lt;/h3&gt;</p>
+<p class="p1"><span class="Apple-converted-space">          </span>&lt;p&gt;Si deux personnes sont d’accord, l’échange se fait simplement, sans argent.&lt;/p&gt;</p>
+<p class="p1"><span class="Apple-converted-space">        </span>&lt;/div&gt;</p>
+<p class="p1"><span class="Apple-converted-space">      </span>&lt;/div&gt;</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">      </span>&lt;div class="faq"&gt;</p>
+<p class="p1"><span class="Apple-converted-space">        </span>&lt;h3&gt;Questions fréquentes&lt;/h3&gt;</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">        </span>&lt;details&gt;</p>
+<p class="p1"><span class="Apple-converted-space">          </span>&lt;summary&gt;Est-ce que Troco est vraiment sans argent ?&lt;/summary&gt;</p>
+<p class="p1"><span class="Apple-converted-space">          </span>&lt;p&gt;Oui. Troco repose sur le troc : on échange des objets, sans achat ni vente.&lt;/p&gt;</p>
+<p class="p1"><span class="Apple-converted-space">        </span>&lt;/details&gt;</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">        </span>&lt;details&gt;</p>
+<p class="p1"><span class="Apple-converted-space">          </span>&lt;summary&gt;Quels objets peut-on échanger ?&lt;/summary&gt;</p>
+<p class="p1"><span class="Apple-converted-space">          </span>&lt;p&gt;Livres, vêtements, déco, petits meubles, instruments, objets du quotidien… tant que l’échange a du sens pour les deux personnes.&lt;/p&gt;</p>
+<p class="p1"><span class="Apple-converted-space">        </span>&lt;/details&gt;</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">        </span>&lt;details&gt;</p>
+<p class="p1"><span class="Apple-converted-space">          </span>&lt;summary&gt;Les échanges doivent-ils être parfaitement équitables ?&lt;/summary&gt;</p>
+<p class="p1"><span class="Apple-converted-space">          </span>&lt;p&gt;Pas forcément. L’important est que les deux personnes soient satisfaites de l’échange.&lt;/p&gt;</p>
+<p class="p1"><span class="Apple-converted-space">        </span>&lt;/details&gt;</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">        </span>&lt;details&gt;</p>
+<p class="p1"><span class="Apple-converted-space">          </span>&lt;summary&gt;Où se passent les échanges ?&lt;/summary&gt;</p>
+<p class="p1"><span class="Apple-converted-space">          </span>&lt;p&gt;Idéalement dans des lieux publics, simples et rassurants, comme des cafés ou des lieux partenaires.&lt;/p&gt;</p>
+<p class="p1"><span class="Apple-converted-space">        </span>&lt;/details&gt;</p>
+<p class="p1"><span class="Apple-converted-space">        </span>&lt;div id="root"&gt;&lt;/div&gt;</p>
+<p class="p1">&lt;script type="module" src="/src/main.jsx"&gt;&lt;/script&gt;</p>
+<p class="p1"><span class="Apple-converted-space">      </span>&lt;/div&gt;</p>
+<p class="p1"><span class="Apple-converted-space">    </span>&lt;/section&gt;</p>
+<p class="p1"><span class="Apple-converted-space">  </span>&lt;/body&gt;</p>
+<p class="p1">&lt;/html&gt;</p>
 </body>
 </html>
